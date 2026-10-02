@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Selbsttest – Ganzrationale Funktionen</title>
+
+<!-- KaTeX (Formeln) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════
+  FIREBASE-KONFIGURATION (gleiche Collection wie in der Checkliste)
+  ═══════════════════════════════════════════════════════════════════════
+-->
+<script>
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyC44fi1xbS-IgOH2cjdQ6CTp3wQLAKvh7A",
+    authDomain: "ganzrationale-funktionen-64c93.firebaseapp.com",
+    projectId: "ganzrationale-funktionen-64c93",
+    storageBucket: "ganzrationale-funktionen-64c93.firebasestorage.app",
+    messagingSenderId: "491561092747",
+    appId: "1:491561092747:web:6caae14b22d0e9489db68e"
+  };
+  const FB_VERSION = "12.19.0";
+  const FB_BASE = "https://www.gstatic.com/firebasejs/" + FB_VERSION;
+  const FB_COLLECTION = "ergebnisse";
+</script>
+
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --surface:#ffffff;
+    --surface2:#f7f9fd;
+    --text:#16202f;
+    --muted:#5b6b83;
+    --line:#e3e8f2;
+    --brand:#3b5bfd;
+    --brand-dark:#2740c9;
+    --brand-soft:#eaeeff;
+    --ok:#0f9d58;
+    --ok-soft:#e6f6ed;
+    --warn:#d98600;
+    --warn-soft:#fff5e0;
+    --bad:#e5484d;
+    --bad-soft:#fdeced;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(20,35,80,.09);
+    --shadow-sm:0 4px 14px rgba(20,35,80,.07);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(135deg,#3b5bfd 0%,#6a3bfd 100%);
+    color:#fff;box-shadow:var(--shadow-sm);
+  }
+  .topbar-inner{
+    max-width:1000px;margin:0 auto;padding:10px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .home-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.16);color:#fff;text-decoration:none;
+    border:1px solid rgba(255,255,255,.35);padding:9px 14px;border-radius:999px;
+    font-weight:600;font-size:.95rem;min-height:42px;
+  }
+  .home-btn:hover{background:rgba(255,255,255,.28)}
+  .topbar-title{font-weight:700;font-size:1rem}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 60px}
+
+  .hero{
+    background:linear-gradient(135deg,#ffffff 0%,#f2f5ff 100%);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px 22px;margin-bottom:18px;
+  }
+  .hero h1{margin:0 0 6px;font-size:clamp(1.35rem,3.6vw,1.9rem)}
+  .hero p{margin:0;color:var(--muted)}
+  .eyebrow{
+    display:inline-block;background:var(--brand-soft);color:var(--brand-dark);
+    border-radius:999px;padding:4px 12px;font-size:.75rem;font-weight:700;
+    letter-spacing:.4px;margin-bottom:10px;
+  }
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;margin-bottom:18px;
+  }
+  .card h2{margin:0 0 14px;font-size:1.12rem}
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field label{display:block;font-weight:600;font-size:.9rem;margin-bottom:6px}
+  .field input,.field select{
+    width:100%;padding:13px 14px;font-size:1rem;color:var(--text);
+    background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;
+    min-height:50px;font-family:inherit;
+  }
+  .field input:focus,.field select:focus{
+    outline:none;border-color:var(--brand);background:#fff;
+    box-shadow:0 0 0 4px rgba(59,91,253,.14);
+  }
+  @media (max-width:620px){ .form-grid{grid-template-columns:1fr} }
+
+  .type-tag{
+    display:inline-block;background:var(--surface2);border:1px solid var(--line);
+    color:var(--muted);border-radius:999px;padding:3px 10px;font-size:.72rem;
+    font-weight:700;letter-spacing:.3px;text-transform:uppercase;
+  }
+
+  .q{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow-sm);padding:18px;margin-bottom:14px;scroll-margin-top:90px;
+  }
+  .q.ok{border-color:#bfe3ce;box-shadow:0 0 0 3px rgba(15,157,88,.10)}
+  .q.no{border-color:#f3c4c6;box-shadow:0 0 0 3px rgba(229,72,77,.09)}
+  .q-head{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px}
+  .q-num{
+    width:30px;height:30px;border-radius:10px;background:var(--brand);color:#fff;
+    display:grid;place-items:center;font-weight:800;font-size:.88rem;flex:0 0 auto;
+  }
+  .q-target{font-size:.85rem;color:var(--muted);flex:1 1 200px}
+  .q-text{font-size:1.03rem;margin:10px 0 14px;font-weight:600}
+  .q-target-full{
+    font-size:.86rem;color:var(--muted);background:var(--surface2);
+    border-left:3px solid var(--brand);padding:8px 12px;border-radius:0 10px 10px 0;margin-bottom:12px;
+  }
+
+  .options{display:grid;gap:10px}
+  .opt{
+    display:flex;align-items:center;gap:11px;padding:13px 14px;border-radius:13px;
+    border:2px solid var(--line);background:var(--surface2);cursor:pointer;
+    min-height:52px;transition:all .15s;position:relative;
+  }
+  .opt:hover{border-color:#b9c6ea;background:#f2f5ff}
+  .opt input{position:absolute;opacity:0;pointer-events:none}
+  .bullet{
+    flex:0 0 auto;width:24px;height:24px;border-radius:7px;border:2px solid var(--line);
+    background:#fff;display:grid;place-items:center;font-size:.8rem;font-weight:800;color:var(--muted);
+  }
+  .opt.sel{border-color:var(--brand);background:var(--brand-soft)}
+  .opt.sel .bullet{border-color:var(--brand);background:var(--brand);color:#fff}
+  .opt.sel-ok{border-color:var(--ok);background:var(--ok-soft)}
+  .opt.sel-ok .bullet{border-color:var(--ok);background:var(--ok);color:#fff}
+  .opt.sel-no{border-color:var(--bad);background:var(--bad-soft)}
+  .opt.sel-no .bullet{border-color:var(--bad);background:var(--bad);color:#fff}
+  .opt.lock{cursor:default}
+  .opt.correct{border-color:var(--ok);background:var(--ok-soft)}
+  .opt.wrong{border-color:var(--bad);background:var(--bad-soft)}
+  .mark{margin-left:auto;font-weight:800;font-size:.85rem;white-space:nowrap}
+  .mark.ok{color:var(--ok)}
+  .mark.no{color:var(--bad)}
+  .grid2{grid-template-columns:1fr 1fr}
+  @media (max-width:520px){ .grid2{grid-template-columns:1fr} }
+
+  .dd-line{
+    background:var(--surface2);border:1px solid var(--line);border-radius:14px;
+    padding:14px;font-size:1.03rem;
+  }
+  select.inline{
+    display:inline-block;padding:9px 12px;font-size:1rem;border:2px solid var(--brand);
+    border-radius:11px;background:#fff;color:var(--text);min-height:46px;max-width:100%;
+    font-family:inherit;vertical-align:middle;
+  }
+  select.inline.ok{border-color:var(--ok);background:var(--ok-soft)}
+  select.inline.no{border-color:var(--bad);background:var(--bad-soft)}
+  textarea{
+    width:100%;padding:13px 14px;font-size:1rem;border:1.5px solid var(--line);
+    border-radius:12px;background:var(--surface2);color:var(--text);font-family:inherit;
+    min-height:74px;resize:vertical;
+  }
+  textarea:focus{outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px rgba(59,91,253,.14)}
+  textarea.ok{border-color:var(--ok);background:var(--ok-soft)}
+  textarea.no{border-color:var(--bad);background:var(--bad-soft)}
+
+  .order-list{display:grid;gap:9px}
+  .order-item{
+    display:flex;align-items:center;gap:10px;padding:12px 13px;border-radius:13px;
+    border:1.5px solid var(--line);background:var(--surface2);min-height:54px;
+  }
+  .order-item.ok{border-color:var(--ok);background:var(--ok-soft)}
+  .order-item.no{border-color:var(--bad);background:var(--bad-soft)}
+  .order-item.neutral{border-style:dashed;border-color:#c9d2e3;background:#f4f6fb}
+  .grip{color:#9aa8bf;font-size:1.15rem;cursor:grab;flex:0 0 auto}
+  .pos{
+    flex:0 0 auto;width:26px;height:26px;border-radius:8px;background:#fff;border:1px solid var(--line);
+    display:grid;place-items:center;font-weight:800;font-size:.8rem;color:var(--muted);
+  }
+  .order-tools{margin-left:auto;display:flex;gap:6px;flex:0 0 auto}
+  .mini{
+    width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#fff;
+    cursor:pointer;font-size:1rem;color:var(--text);line-height:1;
+  }
+  .mini:hover:not(:disabled){border-color:var(--brand);background:var(--brand-soft)}
+  .mini:disabled{opacity:.35;cursor:not-allowed}
+
+  .feedback{margin-top:13px;border-radius:13px;padding:13px 15px;font-size:.94rem;border:1px solid var(--line)}
+  .feedback.ok{background:var(--ok-soft);border-color:#bfe3ce}
+  .feedback.no{background:var(--bad-soft);border-color:#f3c4c6}
+  .feedback b{display:block;margin-bottom:3px}
+  .feedback .line{margin:6px 0 0}
+
+  .actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:6px}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:14px 20px;border-radius:13px;border:1.5px solid transparent;
+    font-weight:700;font-size:1rem;font-family:inherit;cursor:pointer;min-height:50px;
+    text-decoration:none;transition:all .15s;
+  }
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-primary:hover:not(:disabled){background:var(--brand-dark)}
+  .btn-primary:disabled{background:#c3ccdf;cursor:not-allowed}
+  .btn-ghost{background:#fff;color:var(--text);border-color:var(--line)}
+  .btn-ghost:hover{border-color:#b9c6ea;background:#f7f9ff}
+  .btn-ok{background:var(--ok);color:#fff}
+  .btn-ok:hover{background:#0b7a44}
+  .btn-danger{background:var(--bad);color:#fff}
+  .btn-danger:hover{background:#c3373b}
+  .grow{flex:1 1 220px}
+  .sticky-eval{
+    position:sticky;bottom:0;z-index:15;margin-top:18px;
+    background:linear-gradient(180deg,rgba(244,246,251,0),var(--bg) 30%);
+    padding:16px 0 10px;
+  }
+
+  .result{
+    border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);
+    box-shadow:var(--shadow);padding:22px;margin-bottom:18px;
+  }
+  .result-top{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+  .score-ring{
+    width:126px;height:126px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+    background:conic-gradient(var(--brand) calc(var(--p)*1%), #e9edf6 0);position:relative;
+  }
+  .score-ring::after{content:"";position:absolute;inset:12px;background:var(--surface);border-radius:50%}
+  .score-ring span{position:relative;z-index:1;font-weight:800;font-size:1.3rem;text-align:center;line-height:1.1}
+  .result h2{margin:0 0 4px;font-size:1.15rem}
+  .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .stat{flex:1 1 120px;background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:12px 14px}
+  .stat b{display:block;font-size:1.3rem;line-height:1.2}
+  .stat span{font-size:.82rem;color:var(--muted)}
+
+  .status{margin-top:10px;font-size:.9rem;color:var(--muted);padding:11px 14px;border-radius:12px;
+    background:var(--surface2);border:1px solid var(--line)}
+  .status.ok{background:var(--ok-soft);border-color:#bfe3ce;color:#0b7a44}
+  .status.warn{background:var(--warn-soft);border-color:#f2ddab;color:#a86600}
+
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px}
+  table{border-collapse:collapse;width:100%;min-width:540px;font-size:.92rem}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:var(--surface2);font-size:.82rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  tbody tr:last-child td{border-bottom:none}
+  .pill{padding:3px 10px;border-radius:999px;font-size:.8rem;font-weight:700}
+  .pill.ok{background:var(--ok-soft);color:#0b7a44}
+  .pill.no{background:var(--bad-soft);color:#c3373b}
+  .empty{text-align:center;color:var(--muted);padding:22px}
+  .btn-mini{padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:#fff;
+    color:var(--bad);font-weight:700;font-size:.83rem;cursor:pointer;font-family:inherit;min-height:36px}
+  .btn-mini:hover{background:var(--bad-soft);border-color:#f3c4c6}
+  .tip-list{margin:10px 0 0;padding-left:20px}
+  .tip-list li{margin-bottom:5px}
+  .hidden{display:none !important}
+  code.math-fallback{background:#f1f3f8;border:1px solid var(--line);border-radius:6px;
+    padding:1px 6px;font-family:Consolas,monospace;font-size:.9em}
+  .katex{font-size:1.05em}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:20px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="home-btn" href="index.html">&#8962; Startseite</a>
+    <span class="topbar-title">Selbsttest &middot; Ganzrationale Funktionen</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Schritt 2 von 2</span>
+    <h1>Selbsttest</h1>
+    <p>16 Aufgaben zu allen Punkten deiner Checkliste &ndash; insgesamt <strong>20 Punkte</strong>. Am Ende siehst du sofort, was stimmt und was noch fehlt.</p>
+  </section>
+
+  <!-- ====== Wer bist du? ====== -->
+  <section class="card">
+    <h2>Deine Angaben</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="name">Vorname</label>
+        <input type="text" id="name" placeholder="z. B. Lena" autocomplete="given-name" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="kurs">Kurs</label>
+        <select id="kurs">
+          <option value="">– bitte wählen –</option>
+          <option value="GK1">GK1</option>
+          <option value="GK2">GK2</option>
+          <option value="GK3">GK3</option>
+          <option value="GK4">GK4</option>
+        </select>
+      </div>
+    </div>
+    <div class="status" id="startStatus" aria-live="polite">
+      Gib deinen Namen und deinen Kurs an &ndash; die Angaben werden für die Auswertung gespeichert.
+    </div>
+  </section>
+
+  <div id="questions"></div>
+
+  <div class="sticky-eval">
+    <button class="btn btn-primary" id="evalBtn" style="width:100%">Auswerten</button>
+    <div class="status" id="evalStatus" aria-live="polite" style="text-align:center">Bearbeite alle 16 Aufgaben und klicke dann auf <strong>Auswerten</strong>.</div>
+  </div>
+
+  <!-- ====== Ergebnis ====== -->
+  <section id="resultArea" hidden></section>
+
+  <!-- ====== Meine Versuche ====== -->
+  <section class="card" style="margin-top:18px">
+    <h2>Meine Versuche (auf diesem Gerät)</h2>
+    <div class="table-wrap" id="attemptWrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Datum</th><th>Punkte</th><th>Prozent</th><th>Bewertung</th><th></th></tr>
+        </thead>
+        <tbody id="attemptTable"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="attemptEmpty">Noch keine Versuche vorhanden.</div>
+  </section>
+
+  <footer>&copy; Lernbereich Mathematik &middot; <a href="index.html" style="color:var(--brand-dark)">zurück zur Startseite</a></footer>
+</main>
+
+<script>
+/* =========================================================================
+   Firebase (Cloud-Speicherung)
+   ========================================================================= */
+let _fbCache = null;
+async function getFirebase(){
+  if(_fbCache) return _fbCache;
+  const appMod = await import(FB_BASE + "/firebase-app.js");
+  const fsMod  = await import(FB_BASE + "/firebase-firestore.js");
+  const app = appMod.initializeApp(FIREBASE_CONFIG);
+  _fbCache = Object.assign({}, fsMod, { db: fsMod.getFirestore(app) });
+  return _fbCache;
+}
+async function fbSpeichern(daten){
+  const fb = await getFirebase();
+  await fb.addDoc(fb.collection(fb.db, FB_COLLECTION), Object.assign({}, daten, {
+    serverZeit: fb.serverTimestamp()
+  }));
+}
+
+/* =========================================================================
+   KaTeX-Hilfsfunktion m(...) – z. B. m('\\frac{1}{2}')
+   ========================================================================= */
+function m(tex, displayMode){
+  try{
+    if(window.katex){
+      return katex.renderToString(tex, { throwOnError:false, displayMode:!!displayMode, strict:false, output:'html' });
+    }
+  }catch(e){}
+  return '<code class="math-fallback">' + String(tex).replace(/[<>]/g,'') + '</code>';
+}
+
+/* Text mit Mathe mischen:  $inline$  und  $$display$$  */
+function mx(s){
+  const out = [];
+  const re = /\$\$([\s\S]+?)\$\$|\$([^$]+)\$/g;
+  let last = 0, treffer;
+  while((treffer = re.exec(String(s))) !== null){
+    if(treffer.index > last) out.push(String(s).slice(last, treffer.index));
+    if(treffer[1] !== undefined) out.push(m(treffer[1], true));
+    else out.push(m(treffer[2], false));
+    last = re.lastIndex;
+  }
+  if(last < String(s).length) out.push(String(s).slice(last));
+  return out.join('');
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>]/g, function(c){
+    return { '&':'&amp;','<':'&lt;','>':'&gt;' }[c];
+  });
+}
+
+/* =========================================================================
+   Die 16 "Ich kann..."-Sätze (identisch zur Checkliste)
+   ========================================================================= */
+const AUSSAGEN = [
+  'Ich kann eine ganzrationale Funktion als Bruchterm und als Polynom angeben, z. B. $f(x)=\\dfrac{p(x)}{q(x)}$.',
+  'Ich kann den Grad der ganzrationalen Funktion bestimmen und daraus die maximale Anzahl der Nullstellen ableiten.',
+  'Ich kann den Definitionsbereich einer ganzrationalen Funktion bestimmen, z. B. bei $f(x)=\\dfrac{2x+1}{x-3}$.',
+  'Ich kann kürzbare und nicht kürzbare Bruchterme unterscheiden und Brüche sinnvoll kürzen.',
+  'Ich kann die Definitionslücken berechnen und sie im Graphen als <strong>offene Kreise</strong> darstellen.',
+  'Ich kann die Nullstellen ganzrationaler Funktionen berechnen und ihre Vielfachheit bestimmen.',
+  'Ich kann aus der Vielfachheit einer Nullstelle auf den Vorzeichenwechsel am Graphen schließen.',
+  'Ich kann Nullstellen mit Vorzeichenschema, Substitution und Faktorisieren eingrenzen.',
+  'Ich kann Nullstellen ganzrationaler Funktionen näherungsweise bestimmen (z. B. Bisektion oder Newton-Verfahren).',
+  'Ich kann das Verhalten für $x\\to\\pm\\infty$ bestimmen und die waagerechte Asymptote angeben.',
+  'Ich kann vertikale Asymptoten bestimmen und am Graphen einzeichnen.',
+  'Ich kann die Schnittpunkte einer ganzrationalen Funktion mit den Koordinatenachsen berechnen.',
+  'Ich kann die Polynomdivision nutzen, um Bruchterme zu kürzen bzw. zu vereinfachen.',
+  'Ich kann Hoch- und Tiefpunkte mit Hilfe der Ableitungen bestimmen und Extrema einordnen.',
+  'Ich kann Änderungsraten (1. und 2. Ableitung) fachlich deuten.',
+  'Ich kann ein Sachmodell mit einer ganzrationalen Funktion aufstellen, lösen und auf Plausibilität prüfen.'
+];
+
+/* =========================================================================
+   Aufgaben
+   typ: mc = Multiple Choice | tf = Richtig/Falsch | order = Reihenfolge
+        dd = Dropdown (Lückentext) | multi = Mehrfachauswahl | open = offene Antwort
+   ziel: Nummer des passenden "Ich kann..."-Satzes
+   ========================================================================= */
+const FRAGEN = [
+  {
+    nr:1, typ:'mc', ziel:3, punkte:1, titel:'Definitionsbereich',
+    text:'Bestimme den Definitionsbereich von $f(x)=\\dfrac{x^2-4}{x^2-9}$.',
+    optionen:[
+      'Definitionslücken: $x=-3$ und $x=3$, also $D=\\mathbb{R}\\setminus\\{-3;3\\}$',
+      '$x=-2$ und $x=2$',
+      '$x=1$ und $x=-1$',
+      '$x=-9$ und $x=9$'
+    ],
+    korrekt:[0],
+    loesung:'Setze den Nenner gleich 0: $x^2-9=0 \\Rightarrow x=\\pm 3$. Diese Werte sind die Definitionslücken, also $D=\\mathbb{R}\\setminus\\{-3;3\\}$.',
+    hinweis:'Erst den Definitionsbereich bestimmen, dann kürzen – nach dem Kürzen können Lücken wegfallen.'
+  },
+  {
+    nr:2, typ:'tf', ziel:4, punkte:1, titel:'Kürzen',
+    text:'Bei $f(x)=\\dfrac{x^2-4}{x^2-16}$ darf ich vereinfachen zu $\\dfrac{x-2}{x-4}$.',
+    korrekt:'falsch',
+    loesung:'Falsch. $x^2-4=(x-2)(x+2)$ und $x^2-16=(x-4)(x+4)$ haben keinen gemeinsamen Faktor &ndash; es kann also nichts gekürzt werden.',
+    hinweis:'Vor dem Kürzen beide Terme in Faktoren zerlegen und nur gleiche Faktoren kürzen.'
+  },
+  {
+    nr:3, typ:'order', ziel:6, punkte:2, titel:'Nullstellen ordnen',
+    text:'Die Funktion $f(x)=(x-3)(x+1)(x-2)(x+5)$ besitzt vier Nullstellen. Bringe sie in aufsteigender Reihenfolge (von links nach rechts).',
+    items:[
+      { id:'a', text:'$x=3$' },
+      { id:'b', text:'$x=-1$' },
+      { id:'c', text:'$x=2$' },
+      { id:'d', text:'$x=-5$' }
+    ],
+    korrekt:['d','b','c','a'],
+    loesung:'Jeder Faktor liefert eine Nullstelle: $x=3$, $x=-1$, $x=2$, $x=-5$. Aufsteigend geordnet: $-5 < -1 < 2 < 3$.'
+  },
+  {
+    nr:4, typ:'dd', ziel:13, punkte:1, titel:'Polynomdivision',
+    text:'Kürze $f(x)=\\dfrac{x^3-8}{x-2}$ (für $x\\neq 2$) mit Hilfe der Polynomdivision. Es gilt $f(x)=$ [Lücke] ,',
+    optionen:['x^2+2x+4','x^2-2x+4','x^2+2x-4','x^3+x+8'],
+    korrekt:0,
+    nach:'weil $x^3-8=(x-2)\\cdot(x^2+2x+4)$ (dritte Potenz &ndash; Kubikformel).',
+    loesung:'$x^3-8$ ist die dritte Potenz: $x^3-2^3=(x-2)(x^2+2x+4)$. Also $f(x)=x^2+2x+4$ &ndash; aber nur für $x\\neq 2$.',
+    hinweis:'Nur für Werte verwenden, an denen auch der ursprüngliche Bruch definiert ist.'
+  },
+  {
+    nr:5, typ:'multi', ziel:7, punkte:2, titel:'Vielfachheit',
+    text:'Betrachte $f(x)=x^4-2x^2=x^2\\,(x^2-2)$. Welche Aussagen sind richtig?',
+    optionen:[
+      '$x=0$ ist eine Nullstelle von $f$.',
+      '$x=0$ ist eine doppelte Nullstelle.',
+      'Der Graph berührt die $x$-Achse bei $x=0$, ohne sie zu schneiden.',
+      'Bei $x=0$ liegt ein Hochpunkt vor.',
+      '$x=0$ ist eine Nullstelle mit ungerader Vielfachheit.',
+      'Bei $x=0$ liegt ein Wendepunkt vor.'
+    ],
+    korrekt:[0,1,2,3],
+    loesung:'Der Faktor $x^2$ tritt doppelt auf: doppelte (gerade) Nullstelle &rarr; Berührpunkt. In der Umgebung von $0$ ist $f(x)<0$, deshalb ist $x=0$ ein Hochpunkt ($f\'\'(0)=-4<0$) – aber kein Wendepunkt (dafür müsste $f\'\'(0)=0$ gelten).',
+    hinweis:'Volle Punktzahl gibt es nur, wenn genau alle richtigen Aussagen angekreuzt sind.'
+  },
+  {
+    nr:6, typ:'open', ziel:14, punkte:1, titel:'Hochpunkte zählen',
+    text:'Wie viele Hochpunkte besitzt $f(x)=-x^4+4x^2$ auf $\\mathbb{R}$? Antworte mit einer Zahl.',
+    akzeptiert:['2','zwei','2 Hochpunkte','zwei hochpunkte'],
+    loesung:"$f'(x)=-4x^3+8x=-4x\\,(x^2-2)$ liefert $x=0$ und $x=\\pm\\sqrt{2}$. Da $f''(x)=-12x^2+8$ gilt, ist bei $x=\\pm\\sqrt{2}$ der Wert $-16<0$ (Hochpunkt), bei $x=0$ der Wert $8>0$ (Tiefpunkt). Es gibt also 2 Hochpunkte."
+  },
+  {
+    nr:7, typ:'mc', ziel:10, punkte:1, titel:'Waagerechte Asymptote',
+    text:'Bestimme die waagerechte Asymptote von $f(x)=\\dfrac{x^2-1}{x^2-4}$ für $x\\to\\pm\\infty$.',
+    optionen:['$y=1$','$y=2$','$y=-1$','$y=0$'],
+    korrekt:[0],
+    loesung:'Zähler und Nenner haben den gleichen Grad ($2$). Daher ist die waagerechte Asymptote der Quotient der Leitkoeffizienten: $\\frac{1}{1}=1$, also $y=1$.',
+    hinweis:'Gleicher Grad &rarr; Quotient der Leitkoeffizienten. Höherer Grad im Zähler &rarr; schiefe Asymptote.'
+  },
+  {
+    nr:8, typ:'tf', ziel:11, punkte:1, titel:'Vertikale Asymptoten',
+    text:'Nachdem der Bruch gekürzt ist, liegen die vertikalen Asymptoten genau an den Nullstellen des Nenners.',
+    korrekt:'richtig',
+    loesung:'Wahr. Nach dem Kürzen sind die Nullstellen des Nenners genau die Werte, an denen $f(x)\\to\\pm\\infty$ gilt &ndash; dort stehen die vertikalen Asymptoten.'
+  },
+  {
+    nr:9, typ:'dd', ziel:15, punkte:1, titel:'Zweite Ableitung',
+    text:'Für $f(x)=x^3-6x$ gilt $f\'(x)=3x^2-6$. Die zweite Ableitung ist $f\'\'(x)=$ [Lücke]',
+    optionen:['6x','3x^2','-6','6x^2'],
+    korrekt:0,
+    nach:'. Sie beschreibt, wie sich die Steigung verändert (Krümmung).',
+    loesung:'Ableiten verringert den Exponenten und multipliziert mit dem Exponenten: $f\'\'(x)=2\\cdot 3x=6x$.',
+    hinweis:'Gilt $f\'\'(x)>0$, ist der Graph gekrümmt (konvex).'
+  },
+  {
+    nr:10, typ:'mc', ziel:2, punkte:1, titel:'Grad und Nullstellen',
+    text:'Eine ganzrationale Funktion hat den Grad $n=7$. Wie viele verschiedene reelle Nullstellen kann sie höchstens haben?',
+    optionen:['7','5','6','8'],
+    korrekt:[0],
+    loesung:'Eine Polynomfunktion vom Grad $n$ hat höchstens $n$ verschiedene Nullstellen: hier also höchstens 7. Mit Polynomdivision lässt sich diese Zahl sogar nachweisen.'
+  },
+  {
+    nr:11, typ:'order', ziel:8, punkte:2, titel:'Nullstellen eingrenzen',
+    text:'Nullstellen von $f(x)=x^3-4x^2+x+6$ lassen sich durch Einsetzen eingrenzen. Bringe die richtigen Nullstellen in aufsteigender Reihenfolge.',
+    items:[
+      { id:'a', text:'$x=3$' },
+      { id:'b', text:'$x=-1$' },
+      { id:'c', text:'$x=2$' },
+      { id:'d', text:'$x=4$' }
+    ],
+    korrekt:['b','c','a'],
+    loesung:'Einsetzen liefert $f(2)=8-16+2+6=0$, also $x=2$ &ndash; und mit $x-2$ teilen: $x^3-4x^2+x+6=(x-2)(x^2-2x-3)=(x-2)(x-3)(x+1)$. Damit sind $-1$, $2$ und $3$ Nullstellen. $f(4)=64-64+4+6=10\\neq 0$.',
+    hinweis:'Nicht alle angebotenen Werte sind Nullstellen – die Distraktoren dürfen stehen bleiben, entscheidend ist die Reihenfolge der echten Nullstellen.'
+  },
+  {
+    nr:12, typ:'multi', ziel:12, punkte:2, titel:'Achsenschnittpunkte',
+    text:'Betrachte $f(x)=\\dfrac{x^3-8}{x-2}$. Welche Aussagen sind richtig?',
+    optionen:[
+      'Der Definitionsbereich ist $D=\\mathbb{R}\\setminus\\{2\\}$.',
+      'Für alle reellen $x$ gilt $f(x)=x^2+2x+4$.',
+      '$f$ besitzt keine Nullstelle – die $x$-Achse wird nicht geschnitten.',
+      'Der Schnittpunkt mit der $y$-Achse ist $(0\\mid 4)$.',
+      '$f(x)=x^2+2x+4$ gilt nur für $x\\neq 2$.'
+    ],
+    korrekt:[0,2,3,4],
+    loesung:'Der Nenner wird bei $x=2$ zu 0, also $D=\\mathbb{R}\\setminus\\{2\\}$. Für $x\\neq 2$ gilt $f(x)=x^2+2x+4$; bei $x=0$ ist $f(0)=4$, der $y$-Achsenschnittpunkt ist $(0\\mid 4)$. Da $x^2+2x+4$ keine reelle Nullstelle besitzt ($\\Delta=4-16<0$), gibt es keinen Schnitt mit der $x$-Achse.',
+    hinweis:'Achtung: Nach dem Kürzen gilt die Gleichung nur noch für die Werte des Definitionsbereichs.'
+  },
+  {
+    nr:13, typ:'mc', ziel:1, punkte:1, titel:'Faktorisierte Form',
+    text:'Wie lautet die faktorisierte Schreibweise von $f(x)=2x^3-8x$?',
+    optionen:[
+      '$f(x)=2x\\,(x-2)(x+2)$',
+      '$f(x)=2x\\,(x-4)(x+4)$',
+      '$f(x)=2x\\,(x^2+4)$',
+      '$f(x)=(2x-2)(x-2)(x+2)$'
+    ],
+    korrekt:[0],
+    loesung:'Es wird die höchste Potenz von $x$ ausgeklammert: $2x^3-8x=2x\\,(x^2-4)=2x\\,(x-2)(x+2)$.'
+  },
+  {
+    nr:14, typ:'tf', ziel:16, punkte:1, titel:'Sachmodell',
+    text:'In einem Sachmodell darf ich die ganzrationale Funktion auch an den Stellen auswerten, an denen sie nicht definiert ist.',
+    korrekt:'falsch',
+    loesung:'Falsch. An den Definitionslücken ist die Funktion nicht definiert &ndash; meist ist dort auch das Modell unsinnig (negative Anzahlen, unmögliche Längen). Diese Werte gehören nicht zur Lösung.',
+    hinweis:'Plausibilitätsprüfung: Passt die Lösung wirklich zur Fragestellung?'
+  },
+  {
+    nr:15, typ:'dd', ziel:5, punkte:1, titel:'Definitionslücke im Graphen',
+    text:'Die Funktion $f(x)=\\dfrac{x^2-4}{x-2}$ ist bei $x=2$ nicht definiert. Wie muss diese Stelle im Graphen dargestellt werden? Mit [Lücke]',
+    optionen:['einem offenen Kreis','einem ausgefüllten Punkt','einer senkrechten gestrichelten Linie','einem Pfeil nach unten'],
+    korrekt:0,
+    nach:'(Definitionslücke).',
+    loesung:'Definitionslücken zeichnet man als <strong>offenen Kreis</strong>: Der Punkt gehört nicht zum Graphen. Die senkrechte gestrichelte Linie wäre die vertikale Asymptote.',
+    hinweis:'Der Definitionsbereich bestimmt, welche Punkte zum Graphen gehören.'
+  },
+  {
+    nr:16, typ:'open', ziel:9, punkte:1, titel:'Nullstelle näherungsweise',
+    text:'Bestimme die Nullstelle von $f(x)=x^3-2x-5$ auf zwei Nachkommastellen. Die Lösung liegt zwischen $2$ und $3$. Gib die Zahl an (z. B. 2,1).',
+    akzeptiert:['2,09','2.09','2,0946','2,095','2,1'],
+    loesung:'$f(2{,}09)\\approx-0{,}051$ und $f(2{,}10)\\approx0{,}061$, die Nullstelle liegt dazwischen: $x\\approx2{,}0946$, gerundet $x\\approx2{,}09$.',
+    hinweis:'Bisektion oder Newton-Verfahren: Wertetabelle und Vorzeichen prüfen.'
+  }
+];
+
+const TYPEN = {
+  mc:'Multiple Choice', tf:'Richtig / Falsch', order:'Reihenfolge',
+  dd:'Lückentext', multi:'Mehrfachauswahl', open:'Offene Antwort'
+};
+
+/* =========================================================================
+   Zustand
+   ========================================================================= */
+const KEY_VERSUCHE = 'gr_selbsttest_versuche';
+const KEY_ID      = 'gr_identitaet';
+const KEY_DRAFT   = 'gr_selbsttest_entwurf';
+
+let ausgewertet = false;
+let ergebnis    = null;
+let beruehrt    = {};   // Sortieraufgaben gelten erst als beantwortet, wenn sie bewegt wurden
+
+function ladeLokal(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+function speichereLokal(key, wert){
+  try{ localStorage.setItem(key, JSON.stringify(wert)); }catch(e){}
+}
+
+/* =========================================================================
+   Aufgaben-Formulare erzeugen
+   ========================================================================= */
+function baueFragen(){
+  const box = document.getElementById('questions');
+  box.innerHTML = '';
+  FRAGEN.forEach(function(f){
+    const el = document.createElement('section');
+    el.className = 'q';
+    el.id = 'q' + f.nr;
+    let body = '';
+
+    if(f.typ === 'mc' || f.typ === 'multi'){
+      const type = f.typ === 'mc' ? 'radio' : 'checkbox';
+      body = '<div class="options' + (f.typ === 'tf' ? ' grid2' : '') + '">' +
+        f.optionen.map(function(o, i){
+          return '<label class="opt" data-opt="' + i + '">' +
+                   '<input type="' + type + '" name="f' + f.nr + '" value="' + i + '">' +
+                   '<span class="bullet">' + (type === 'checkbox' ? '' : 'A'.replace('A', String.fromCharCode(65 + i))) + '</span>' +
+                   '<span>' + mx(o) + '</span>' +
+                 '</label>';
+        }).join('') +
+      '</div>';
+    }
+    else if(f.typ === 'tf'){
+      body = '<div class="options grid2">' +
+        ['richtig','falsch'].map(function(w){
+          return '<label class="opt" data-opt="' + w + '">' +
+                   '<input type="radio" name="f' + f.nr + '" value="' + w + '">' +
+                   '<span class="bullet">' + (w === 'richtig' ? '✓' : '✗') + '</span>' +
+                   '<span>' + (w === 'richtig' ? 'Richtig' : 'Falsch') + '</span>' +
+                 '</label>';
+        }).join('') +
+      '</div>';
+    }
+    else if(f.typ === 'dd'){
+      body = '<div class="dd-line">' + mx(f.text.split('[Lücke]')[0]) +
+        '<select class="inline" id="dd' + f.nr + '">' +
+          '<option value="">– wählen –</option>' +
+          f.optionen.map(function(o, i){ return '<option value="' + i + '">' + mx(o) + '</option>'; }).join('') +
+        '</select>' +
+        mx(f.text.split('[Lücke]')[1]) + (f.nach ? ' ' + mx(f.nach) : '') +
+      '</div>';
+    }
+    else if(f.typ === 'order'){
+      const reihenfolge = mische(f.items.map(function(it){ return it.id; }));
+      body = '<div class="order-list" id="ord' + f.nr + '" data-nr="' + f.nr + '">' +
+        reihenfolge.map(function(id, pos){
+          const it = f.items.filter(function(x){ return x.id === id; })[0];
+          return '<div class="order-item" draggable="true" data-id="' + it.id + '">' +
+            '<span class="grip">&#8942;&#8942;</span>' +
+            '<span class="pos">' + (pos + 1) + '</span>' +
+            '<span>' + mx(it.text) + '</span>' +
+            '<span class="order-tools">' +
+              '<button class="mini up" type="button" aria-label="nach oben">&#9650;</button>' +
+              '<button class="mini down" type="button" aria-label="nach unten">&#9660;</button>' +
+            '</span>' +
+          '</div>';
+        }).join('') +
+      '</div>';
+    }
+    else if(f.typ === 'open'){
+      body = '<textarea id="open' + f.nr + '" placeholder="Deine Antwort …" maxlength="120"></textarea>' +
+             '<div class="status" style="margin-top:8px">Zahl oder Wort genügt (z. B. <em>2</em> oder <em>zwei</em>).</div>';
+    }
+
+    el.innerHTML =
+      '<div class="q-head">' +
+        '<div class="q-num">' + f.nr + '</div>' +
+        '<span class="type-tag">' + TYPEN[f.typ] + ' &middot; ' + f.punkte + ' P' + (f.punkte > 1 ? '.' : '') + '</span>' +
+        '<div class="q-target">' + esc(f.titel) + '</div>' +
+      '</div>' +
+      '<div class="q-target-full">Ziel: ' + AUSSAGEN[f.ziel - 1] + '</div>' +
+      '<div class="q-text">' + mx(f.text.replace('[Lücke]', '')) + '</div>' +
+      body +
+      '<div class="fb" id="fb' + f.nr + '"></div>';
+
+    box.appendChild(el);
+  });
+
+  aktivereEingaben();
+}
+
+/* Zufällige, aber stabile Reihenfolge der Sortieraufgabe */
+function mische(arr){
+  const a = arr.slice();
+  for(let i = a.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    const t = a[i]; a[i] = a[j]; a[j] = t;
+  }
+  if(a.join() === arr.join() && a.length > 1){
+    const t = a[0]; a[0] = a[1]; a[1] = t;
+  }
+  return a;
+}
+
+/* =========================================================================
+   Eingaben
+   ========================================================================= */
+function aktivereEingaben(){
+  document.querySelectorAll('.q').forEach(function(el){
+    const nr = el.id.substring(1);
+
+    el.addEventListener('change', function(e){
+      const lab = e.target.closest('.opt');
+      if(lab) markiereOpt(lab);
+      const sel = e.target.closest('select.inline');
+      if(sel) speichereEntwurf();
+      const ta = e.target.closest('textarea');
+      if(ta) speichereEntwurf();
+      if(!ausgewertet) pruefeVollstaendig(false);
+    });
+
+    el.addEventListener('input', function(e){
+      if(e.target.closest('textarea')){
+        speichereEntwurf();
+        pruefeVollstaendig(false);
+      }
+    });
+  });
+
+  /* Multiple Choice / Mehrfachauswahl / Richtig-Falsch: Auswahl markieren
+     (Checkbox/Radio werden bewusst selbst gesetzt – sonst würde der Browser
+      durch das Label noch einmal umschalten) */
+  document.getElementById('questions').addEventListener('click', function(e){
+    const lab = e.target.closest('.opt');
+    if(!lab || ausgewertet) return;
+    if(lab.closest('.q.locked')) return;
+    e.preventDefault();
+    const inp = lab.querySelector('input');
+    if(inp.type === 'radio'){
+      inp.checked = true;
+    }else{
+      inp.checked = !inp.checked;
+      inp.dispatchEvent(new Event('change', { bubbles:true }));
+    }
+    markiereOpt(lab);
+    speichereEntwurf();
+    pruefeVollstaendig(false);
+  });
+
+  aktiviereSortieren();
+}
+function markiereOpt(lab){
+  const q = lab.closest('.q');
+  q.querySelectorAll('.opt').forEach(function(o){ o.classList.remove('sel'); });
+  if(lab.querySelector('input').checked) lab.classList.add('sel');
+}
+
+/* =========================================================================
+   Sortieraufgabe: Ziehen & Ablegen + Buttons (handytauglich)
+   ========================================================================= */
+function aktiviereSortieren(){
+  document.querySelectorAll('.order-list').forEach(function(list){
+    let dragId = null;
+    nummeriere(list);
+
+    list.addEventListener('dragstart', function(e){
+      const it = e.target.closest('.order-item');
+      if(!it || ausgewertet) return;
+      dragId = it.dataset.id;
+      it.style.opacity = '.5';
+      try{ e.dataTransfer.setData('text/plain', dragId); }catch(err){}
+    });
+    list.addEventListener('dragend', function(e){
+      const it = e.target.closest('.order-item');
+      if(it) it.style.opacity = '';
+    });
+    list.addEventListener('dragover', function(e){ e.preventDefault(); });
+    list.addEventListener('drop', function(e){
+      e.preventDefault();
+      const ziel = e.target.closest('.order-item');
+      if(!ziel || ausgewertet) return;
+      const quelle = list.querySelector('.order-item[data-id="' + dragId + '"]');
+      if(!quelle || quelle === ziel) return;
+      const items = Array.from(list.children);
+      if(items.indexOf(quelle) < items.indexOf(ziel)) ziel.after(quelle);
+      else ziel.before(quelle);
+      beruehrt[list.dataset.nr] = true;
+      nummeriere(list);
+      speichereEntwurf();
+      pruefeVollstaendig(false);
+    });
+
+    list.addEventListener('click', function(e){
+      if(ausgewertet) return;
+      const up = e.target.closest('.mini.up');
+      const down = e.target.closest('.mini.down');
+      const it = e.target.closest('.order-item');
+      if(!it) return;
+      if(up){ if(it.previousElementSibling) it.previousElementSibling.before(it); }
+      if(down){ if(it.nextElementSibling) it.nextElementSibling.after(it); }
+      if(up || down){
+        beruehrt[list.dataset.nr] = true;
+        nummeriere(list);
+        speichereEntwurf();
+        pruefeVollstaendig(false);
+      }
+    });
+  });
+}
+function nummeriere(list){
+  Array.from(list.children).forEach(function(el, i){
+    el.querySelector('.pos').textContent = String(i + 1);
+    el.querySelector('.mini.up').disabled   = (i === 0);
+    el.querySelector('.mini.down').disabled = (i === list.children.length - 1);
+  });
+}
+
+/* =========================================================================
+   Eingaben auslesen
+   ========================================================================= */
+function leseAntwort(f){
+  if(f.typ === 'mc' || f.typ === 'tf'){
+    const inp = document.querySelector('input[name="f' + f.nr + '"]:checked');
+    if(!inp) return null;
+    const v = inp.value;
+    return { wert:v, text:(f.typ === 'tf') ? (v === 'richtig' ? 'Richtig' : 'Falsch') : mx(f.optionen[parseInt(v, 10)]), index:parseInt(v, 10) };
+  }
+  if(f.typ === 'multi'){
+    const aus = Array.from(document.querySelectorAll('input[name="f' + f.nr + '"]:checked'));
+    if(!aus.length) return null;
+    const ind = aus.map(function(a){ return parseInt(a.value, 10); }).sort(function(a, b){ return a - b; });
+    return { wert:ind, index:ind, text:ind.map(function(i){ return mx(f.optionen[i]); }).join(' &nbsp;+&nbsp; ') };
+  }
+  if(f.typ === 'dd'){
+    const sel = document.getElementById('dd' + f.nr);
+    if(!sel.value) return null;
+    return { wert:parseInt(sel.value, 10), index:parseInt(sel.value, 10), text:mx(f.optionen[parseInt(sel.value, 10)]) };
+  }
+  if(f.typ === 'order'){
+    if(!beruehrt[f.nr]) return null;   // noch nicht bewegt -> gilt als offen
+    const list = document.getElementById('ord' + f.nr);
+    const ids = Array.from(list.children).map(function(el){ return el.dataset.id; });
+    return { wert:ids, ids:ids, text:ids.map(function(id){
+      const it = f.items.filter(function(x){ return x.id === id; })[0];
+      return mx(it.text);
+    }).join(' &nbsp;&rarr;&nbsp; ') };
+  }
+  if(f.typ === 'open'){
+    const ta = document.getElementById('open' + f.nr);
+    const v = ta.value.trim();
+    if(!v) return null;
+    return { wert:v, text:esc(v) };
+  }
+  return null;
+}
+
+function pruefeVollstaendig(anzeigen){
+  const offen = FRAGEN.filter(function(f){ return leseAntwort(f) === null; });
+  const box = document.getElementById('evalStatus');
+  if(ausgewertet) return offen.length;
+  if(offen.length === 0){
+    box.className = 'status ok';
+    box.innerHTML = 'Alle ' + FRAGEN.length + ' Aufgaben bearbeitet &ndash; jetzt auf <strong>Auswerten</strong> klicken.';
+  }else{
+    box.className = 'status' + (anzeigen ? ' warn' : '');
+    box.innerHTML = 'Noch <strong>' + offen.length + '</strong> Aufgabe(n) offen: ' +
+      offen.slice(0, 6).map(function(f){ return 'Nr. ' + f.nr; }).join(', ') +
+      (offen.length > 6 ? ' …' : '') + '.';
+  }
+  return offen.length;
+}
+
+/* =========================================================================
+   Offene Antworten vergleichen
+   ========================================================================= */
+function norm(s){
+  return String(s == null ? '' : s)
+    .toLowerCase().trim().replace(/\s+/g, ' ')
+    .replace(/,/g, '.')
+    .replace(/[^0-9a-z.\- ]/g, '');
+}
+function nurZiffern(s){
+  return String(s == null ? '' : s).replace(/[^0-9.]/g, '');
+}
+function offeneAntwortRichtig(eingabe,liste){
+  const a = norm(eingabe);
+  if(!a) return false;
+  for(let i = 0; i < liste.length; i++){
+    const b = norm(liste[i]);
+    if(a === b) return true;
+    const da = nurZiffern(a), db = nurZiffern(b);
+    if(da && db && da === db) return true;
+  }
+  return false;
+}
+
+/* =========================================================================
+   Auswerten
+   ========================================================================= */
+function auswerten(){
+  if(ausgewertet) return;
+
+  const name = document.getElementById('name').value.trim();
+  const kurs = document.getElementById('kurs').value;
+  if(!name || !kurs){
+    document.getElementById('startStatus').className = 'status warn';
+    document.getElementById('startStatus').innerHTML = 'Bitte gib deinen <strong>Vornamen</strong> und deinen <strong>Kurs</strong> an – dann kann ausgewertet werden.';
+    document.getElementById('name').focus();
+    return;
+  }
+  const offen = pruefeVollstaendig(true);
+  if(offen.length > 0){
+    document.getElementById('q' + FRAGEN.filter(function(f){ return leseAntwort(f) === null; })[0].nr)
+      .scrollIntoView({ behavior:'smooth', block:'center' });
+    return;
+  }
+
+  const maxPunkte = FRAGEN.reduce(function(s, f){ return s + f.punkte; }, 0);
+  let punkte = 0, richtig = 0, falsch = 0;
+  const themen = [], details = [];
+
+  FRAGEN.forEach(function(f){
+    const a = leseAntwort(f);
+    let ok = false, loesung = '';
+
+    if(f.typ === 'mc'){
+      ok = a.index === f.korrekt[0];
+      loesung = mx(f.optionen[f.korrekt[0]]);
+    }else if(f.typ === 'tf'){
+      ok = a.wert === f.korrekt;
+      loesung = (f.korrekt === 'richtig') ? 'Richtig' : 'Falsch';
+    }else if(f.typ === 'multi'){
+      const richtigIdx = f.korrekt.slice().sort(function(x, y){ return x - y; });
+      ok = a.index.length === richtigIdx.length && a.index.every(function(v, i){ return v === richtigIdx[i]; });
+      loesung = richtigIdx.map(function(i){ return mx(f.optionen[i]); }).join(' &nbsp;+&nbsp; ');
+    }else if(f.typ === 'dd'){
+      ok = a.index === f.korrekt;
+      loesung = mx(f.optionen[f.korrekt]);
+    }else if(f.typ === 'order'){
+      /* Nur die richtigen Elemente zählen – Distraktoren dürfen stehen bleiben */
+      const relevant = a.ids.filter(function(id){ return f.korrekt.indexOf(id) !== -1; });
+      ok = relevant.length === f.korrekt.length && f.korrekt.every(function(v, i){ return v === relevant[i]; });
+      loesung = f.korrekt.map(function(id){
+        const it = f.items.filter(function(x){ return x.id === id; })[0];
+        return mx(it.text);
+      }).join(' &nbsp;&rarr;&nbsp; ');
+    }else if(f.typ === 'open'){
+      ok = offeneAntwortRichtig(a.wert, f.akzeptiert);
+      loesung = mx('$' + String(f.akzeptiert[0]).replace(',', '{,}') + '$');
+    }
+
+    if(ok){ punkte += f.punkte; richtig++; } else { falsch++; themen.push(f); }
+    details.push({ nr:f.nr, typ:f.typ, ok:ok, antwort:a.text, loesung:loesung });
+  });
+
+  const prozent = Math.round(punkte / maxPunkte * 100);
+  const fb = feedbackText(prozent);
+
+  ergebnis = {
+    typ:'selbsttest', name:name, kurs:kurs, datum:new Date().toISOString(),
+    punkte:punkte, maxPunkte:maxPunkte, prozent:prozent, note:fb.titel,
+    richtig:richtig, falsch:falsch,
+    themen:themen.map(function(f){ return 'Nr. ' + f.nr; }).join(', '),
+    details:details
+  };
+  ausgewertet = true;
+
+  sperreFormulare();
+  zeigeErgebnis(ergebnis, fb, themen);
+  lokalSpeichern(ergebnis);
+  cloudSpeichern(ergebnis);
+  document.getElementById('resultArea').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function feedbackText(p){
+  if(p >= 85) return { titel:'Sehr gut', text:'Du bist sehr gut vorbereitet. Sieh dir die Lösungen trotzdem kurz an &ndash; so sitzen sie sicher.' };
+  if(p >= 70) return { titel:'Gut', text:'Das Wissen sitzt! Wiederhole die offenen Aufgaben und die dazugehörigen Themen noch einmal.' };
+  if(p >= 50) return { titel:'Satisfizierend', text:'Ein guter Teil sitzt. Arbeite gezielt die markierten Themen durch und mach danach einen neuen Versuch.' };
+  if(p >= 30) return { titel:'Noch üben', text:'Da fehlt noch einiges. Wiederhole das Thema mit der Checkliste und versuche es danach noch einmal.' };
+  return { titel:'Grundlagen wiederholen', text:'Bitte arbeite das Kapitel &bdquo;Ganzrationale Funktionen&ldquo; noch einmal komplett durch und wiederhole dann den Test.' };
+}
+
+/* Formulare sperren und Muster einzeichnen */
+function sperreFormulare(){
+  document.querySelectorAll('.q').forEach(function(el){ el.classList.add('locked'); });
+  document.querySelectorAll('.q input, .q select, .q textarea').forEach(function(f){ f.disabled = true; });
+  document.querySelectorAll('.mini').forEach(function(b){ b.disabled = true; });
+  document.querySelectorAll('.order-item').forEach(function(el){ el.draggable = false; });
+
+  ergebnis.details.forEach(function(d){
+    const q = document.getElementById('q' + d.nr);
+    q.classList.add(d.ok ? 'ok' : 'no');
+    const frage = FRAGEN.filter(function(f){ return f.nr === d.nr; })[0];
+
+    if(frage.typ === 'mc' || frage.typ === 'multi'){
+      q.querySelectorAll('.opt').forEach(function(lab){
+        const i = parseInt(lab.dataset.opt, 10);
+        const warRichtig = frage.korrekt.indexOf(i) !== -1;
+        const warGewaehlt = lab.querySelector('input').checked;
+        lab.classList.add('lock');
+        lab.classList.remove('sel');
+        if(warGewaehlt && warRichtig){ lab.classList.add('correct'); }
+        else if(warGewaehlt && !warRichtig){ lab.classList.add('wrong'); }
+        else if(!warGewaehlt && warRichtig){ lab.classList.add('correct'); }
+        if(warRichtig){
+          lab.insertAdjacentHTML('beforeend', '<span class="mark ok">richtig</span>');
+        }else if(warGewaehlt){
+          lab.insertAdjacentHTML('beforeend', '<span class="mark no">deine Wahl</span>');
+        }
+      });
+    }else if(frage.typ === 'tf'){
+      q.querySelectorAll('.opt').forEach(function(lab){
+        const v = lab.dataset.opt;
+        const warRichtig = (v === frage.korrekt);
+        const warGewaehlt = lab.querySelector('input').checked;
+        lab.classList.add('lock');
+        lab.classList.remove('sel');
+        if(warRichtig) lab.classList.add('correct');
+        if(warGewaehlt && !warRichtig) lab.classList.add('wrong');
+        if(warRichtig) lab.insertAdjacentHTML('beforeend', '<span class="mark ok">richtig</span>');
+        else if(warGewaehlt) lab.insertAdjacentHTML('beforeend', '<span class="mark no">deine Wahl</span>');
+      });
+    }else if(frage.typ === 'dd'){
+      const sel = document.getElementById('dd' + frage.nr);
+      sel.classList.add(d.ok ? 'ok' : 'no');
+    }else if(frage.typ === 'order'){
+      const list = document.getElementById('ord' + frage.nr);
+      const aktuell = Array.from(list.children).map(function(el){ return el.dataset.id; });
+      const relevant = aktuell.filter(function(id){ return frage.korrekt.indexOf(id) !== -1; });
+      const sortiert = relevant.length === frage.korrekt.length && frage.korrekt.every(function(v, i){ return v === relevant[i]; });
+      list.querySelectorAll('.order-item').forEach(function(el){
+        if(frage.korrekt.indexOf(el.dataset.id) === -1) el.classList.add('neutral');
+        else el.classList.add(sortiert ? 'ok' : 'no');
+      });
+    }else if(frage.typ === 'open'){
+      document.getElementById('open' + frage.nr).classList.add(d.ok ? 'ok' : 'no');
+    }
+
+    /* Feedback-Box */
+    const teile = [];
+    teile.push('<div class="feedback ' + (d.ok ? 'ok' : 'no') + '">' +
+      '<b>' + (d.ok ? '&#10003; Richtig' : '&#10007; Nicht ganz') + ' &ndash; ' + esc(frage.titel) + '</b>' +
+      '<div class="line"><strong>Deine Antwort:</strong> ' + (d.antwort || '<em>keine</em>') + '</div>' +
+      '<div class="line"><strong>Richtige Antwort:</strong> ' + d.loesung + '</div>' +
+      (frage.hinweis ? '<div class="line"><em>Tipp: ' + mx(frage.hinweis) + '</em></div>' : '') +
+    '</div>');
+    teile.push('<div class="fb-detail hidden" data-detail="' + frage.nr + '" style="margin-top:9px;font-size:.94rem">' +
+      '<strong>Lösung &amp; Herleitung:</strong> ' + mx(frage.loesung) + '</div>');
+
+    document.getElementById('fb' + frage.nr).innerHTML = teile.join('');
+  });
+}
+
+function toggleLoesungen(anzeigen){
+  document.querySelectorAll('.fb-detail').forEach(function(el){ el.classList.toggle('hidden', !anzeigen); });
+  const btn = document.getElementById('solBtn');
+  btn.textContent = anzeigen ? 'Lösungen ausblenden' : 'Richtige Antworten anzeigen';
+}
+
+/* =========================================================================
+   Ergebnisanzeige
+   ========================================================================= */
+function zeigeErgebnis(res, fb, themen){
+  document.getElementById('resultArea').innerHTML =
+    '<div class="result">' +
+      '<div class="result-top">' +
+        '<div>' +
+          '<h2>Dein Ergebnis: ' + esc(fb.titel) + '</h2>' +
+          '<p style="margin:0;color:var(--muted)">' + esc(res.name) + ' &middot; Kurs ' + esc(res.kurs) + '</p>' +
+          '<div class="stat-row">' +
+            '<div class="stat"><b style="color:var(--brand)">' + res.punkte + ' / ' + res.maxPunkte + '</b><span>Punkte</span></div>' +
+            '<div class="stat"><b style="color:var(--ok)">' + res.richtig + '</b><span>richtig</span></div>' +
+            '<div class="stat"><b style="color:var(--bad)">' + res.falsch + '</b><span>falsch</span></div>' +
+            '<div class="stat"><b>' + res.prozent + '%</b><span>Prozent</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="score-ring" style="--p:' + res.prozent + '"><span>' + res.punkte + '<br>' + res.maxPunkte + '</span></div>' +
+      '</div>' +
+      '<p style="margin:14px 0 0">' + fb.text + '</p>' +
+      (themen.length
+        ? '<p style="margin:16px 0 4px"><strong>Hier solltest du noch üben:</strong></p>' +
+          '<ul class="tip-list">' + themen.map(function(f){
+            return '<li><strong>Nr. ' + f.nr + ':</strong> ' + f.titel + ' &ndash; ' + AUSSAGEN[f.ziel - 1] + '</li>';
+          }).join('') + '</ul>'
+        : '<p class="status ok" style="margin-top:14px">&#10003; Alle Aufgaben richtig &ndash; stark!</p>') +
+      '<div class="actions" style="margin-top:16px">' +
+        '<button class="btn btn-ok grow" id="solBtn" type="button">Richtige Antworten anzeigen</button>' +
+        '<button class="btn btn-ghost" id="againBtn" type="button">&#8635; Wiederholen</button>' +
+        '<a class="btn btn-ghost" href="index.html">Zur Startseite</a>' +
+      '</div>' +
+      '<div class="status" id="saveStatus">Versuch wird gespeichert …</div>' +
+    '</div>';
+  document.getElementById('resultArea').hidden = false;
+  document.getElementById('solBtn').addEventListener('click', function(){ toggleLoesungen(this.textContent === 'Richtige Antworten anzeigen'); });
+  document.getElementById('againBtn').addEventListener('click', wiederholen);
+}
+
+function lokalSpeichern(res){
+  const liste = ladeLokal(KEY_VERSUCHE, []);
+  liste.unshift({
+    datum:res.datum, punkte:res.punkte, maxPunkte:res.maxPunkte,
+    prozent:res.prozent, note:res.note, kurs:res.kurs
+  });
+  speichereLokal(KEY_VERSUCHE, liste.slice(0, 50));
+  speichereLokal(KEY_ID, { name:res.name, kurs:res.kurs });
+  zeigeVersuche();
+}
+
+async function cloudSpeichern(res){
+  const box = document.getElementById('saveStatus');
+  try{
+    await fbSpeichern({
+      typ:'selbsttest',
+      name:res.name,
+      kurs:res.kurs,
+      datum:res.datum,
+      punkte:res.punkte,
+      maxPunkte:res.maxPunkte,
+      prozent:res.prozent,
+      note:res.note,
+      richtig:res.richtig,
+      falsch:res.falsch,
+      themen:res.themen
+    });
+    box.className = 'status ok';
+    box.innerHTML = '&#10003; Versuch gespeichert (auf diesem Gerät und in der Cloud).';
+  }catch(err){
+    box.className = 'status warn';
+    box.innerHTML = '&#9888; Der Versuch wurde lokal gespeichert, die Cloud konnte nicht erreicht werden. ' +
+      'Falls die Seite direkt per Doppelklick geöffnet wurde, bitte einmal über einen Webserver bzw. &bdquo;Live Server&ldquo; öffnen.';
+    console.warn('Firebase:', err);
+  }
+}
+
+/* =========================================================================
+   Versuchstabelle
+   ========================================================================= */
+function datumText(iso){
+  try{
+    return new Date(iso).toLocaleString('de-DE', { day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }catch(e){ return iso; }
+}
+function zeigeVersuche(){
+  const liste = ladeLokal(KEY_VERSUCHE, []);
+  const tbody = document.getElementById('attemptTable');
+  document.getElementById('attemptWrap').hidden = liste.length === 0;
+  document.getElementById('attemptEmpty').hidden = liste.length !== 0;
+  tbody.innerHTML = '';
+  liste.forEach(function(e, i){
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + esc(datumText(e.datum)) + '</td>' +
+      '<td><strong>' + e.punkte + ' / ' + e.maxPunkte + '</strong></td>' +
+      '<td>' + e.prozent + '%</td>' +
+      '<td><span class="pill ' + (e.prozent >= 70 ? 'ok' : 'no') + '">' + esc(e.note) + '</span></td>' +
+      '<td><button class="btn-mini" data-del="' + i + '">Löschen</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================================================================
+   Entwurf speichern / wiederherstellen
+   ========================================================================= */
+function speichereEntwurf(){
+  if(ausgewertet) return;
+  const daten = { name:document.getElementById('name').value.trim(), kurs:document.getElementById('kurs').value, fragen:{} };
+  FRAGEN.forEach(function(f){
+    const a = leseAntwort(f);
+    daten.fragen[f.nr] = a ? a.wert : null;
+  });
+  speichereLokal(KEY_DRAFT, daten);
+}
+function ladeEntwurf(){
+  const d = ladeLokal(KEY_DRAFT, null);
+  const id = ladeLokal(KEY_ID, null);
+  const nameEl = document.getElementById('name'), kursEl = document.getElementById('kurs');
+  if(id && id.name && !nameEl.value) nameEl.value = id.name;
+  if(id && id.kurs && !kursEl.value) kursEl.value = id.kurs;
+  if(!d || !d.fragen) return;
+
+  Object.keys(d.fragen).forEach(function(nr){
+    const f = FRAGEN.filter(function(x){ return String(x.nr) === String(nr); })[0];
+    const v = d.fragen[nr];
+    if(!f || v === null || v === undefined) return;
+    if(f.typ === 'mc' || f.typ === 'tf' || f.typ === 'multi'){
+      const werte = Array.isArray(v) ? v : [v];
+      werte.forEach(function(w){
+        const inp = document.querySelector('input[name="f' + f.nr + '"][value="' + w + '"]');
+        if(inp){
+          inp.checked = true;
+          markiereOpt(inp.closest('.opt'));
+        }
+      });
+    }else if(f.typ === 'dd'){
+      const sel = document.getElementById('dd' + f.nr);
+      if(sel && sel.querySelector('option[value="' + v + '"]')) sel.value = v;
+    }else if(f.typ === 'open'){
+      const ta = document.getElementById('open' + f.nr);
+      if(ta) ta.value = v;
+    }else if(f.typ === 'order'){
+      const list = document.getElementById('ord' + f.nr);
+      if(list && Array.isArray(v)){
+        const kinder = Array.from(list.children).sort(function(a, b){
+          return v.indexOf(a.dataset.id) - v.indexOf(b.dataset.id);
+        });
+        kinder.forEach(function(el){ list.appendChild(el); });
+        beruehrt[f.nr] = true;
+        nummeriere(list);
+      }
+    }
+  });
+  pruefeVollstaendig(false);
+}
+
+/* =========================================================================
+   Wiederholen
+   ========================================================================= */
+function wiederholen(){
+  if(!confirm('Test zurücksetzen und neu beginnen?')) return;
+  ausgewertet = false;
+  ergebnis = null;
+  beruehrt = {};
+  try{ localStorage.removeItem(KEY_DRAFT); }catch(e){}
+  document.getElementById('resultArea').hidden = true;
+  document.getElementById('resultArea').innerHTML = '';
+  baueFragen();
+  pruefeVollstaendig(false);
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+/* =========================================================================
+   Start
+   ========================================================================= */
+window.addEventListener('DOMContentLoaded', function(){
+  baueFragen();
+  ladeEntwurf();
+  pruefeVollstaendig(false);
+  zeigeVersuche();
+
+  ['name','kurs'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){
+      speichereEntwurf();
+      document.getElementById('startStatus').className = 'status';
+      document.getElementById('startStatus').innerHTML = 'Gib deinen Namen und deinen Kurs an &ndash; die Angaben werden für die Auswertung gespeichert.';
+    });
+  });
+
+  document.getElementById('evalBtn').addEventListener('click', auswerten);
+
+  document.getElementById('attemptTable').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-del]');
+    if(!b) return;
+    const liste = ladeLokal(KEY_VERSUCHE, []);
+    liste.splice(parseInt(b.dataset.del, 10), 1);
+    speichereLokal(KEY_VERSUCHE, liste);
+    zeigeVersuche();
+  });
+});
+</script>
+</body>
+</html>

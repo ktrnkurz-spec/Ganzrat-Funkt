@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Checkliste – Ganzrationale Funktionen</title>
+
+<!-- KaTeX (Formeln) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════
+  FIREBASE-KONFIGURATION  (wird auch in selbsttest.html und ergebnisse.html genutzt)
+  ═══════════════════════════════════════════════════════════════════════
+-->
+<script>
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyC44fi1xbS-IgOH2cjdQ6CTp3wQLAKvh7A",
+    authDomain: "ganzrationale-funktionen-64c93.firebaseapp.com",
+    projectId: "ganzrationale-funktionen-64c93",
+    storageBucket: "ganzrationale-funktionen-64c93.firebasestorage.app",
+    messagingSenderId: "491561092747",
+    appId: "1:491561092747:web:6caae14b22d0e9489db68e"
+  };
+  const FB_VERSION = "12.19.0";
+  const FB_BASE = "https://www.gstatic.com/firebasejs/" + FB_VERSION;
+  const FB_COLLECTION = "ergebnisse";   // eine gemeinsame Collection für Checkliste + Selbsttest
+</script>
+
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --surface:#ffffff;
+    --surface2:#f7f9fd;
+    --text:#16202f;
+    --muted:#5b6b83;
+    --line:#e3e8f2;
+    --brand:#3b5bfd;
+    --brand-dark:#2740c9;
+    --brand-soft:#eaeeff;
+    --ok:#0f9d58;
+    --ok-soft:#e6f6ed;
+    --warn:#d98600;
+    --warn-soft:#fff5e0;
+    --bad:#e5484d;
+    --bad-soft:#fdeced;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(20,35,80,.09);
+    --shadow-sm:0 4px 14px rgba(20,35,80,.07);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(135deg,#3b5bfd 0%,#6a3bfd 100%);
+    color:#fff;box-shadow:var(--shadow-sm);
+  }
+  .topbar-inner{
+    max-width:1000px;margin:0 auto;padding:10px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .home-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.16);color:#fff;text-decoration:none;
+    border:1px solid rgba(255,255,255,.35);padding:9px 14px;border-radius:999px;
+    font-weight:600;font-size:.95rem;min-height:42px;
+  }
+  .home-btn:hover{background:rgba(255,255,255,.28)}
+  .topbar-title{font-weight:700;font-size:1rem}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 60px}
+
+  .hero{
+    background:linear-gradient(135deg,#ffffff 0%,#f2f5ff 100%);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px 22px;margin-bottom:18px;
+  }
+  .hero h1{margin:0 0 6px;font-size:clamp(1.35rem,3.6vw,1.9rem)}
+  .hero p{margin:0;color:var(--muted)}
+  .eyebrow{
+    display:inline-block;background:var(--brand-soft);color:var(--brand-dark);
+    border-radius:999px;padding:4px 12px;font-size:.75rem;font-weight:700;
+    letter-spacing:.4px;margin-bottom:10px;
+  }
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;margin-bottom:18px;
+  }
+  .card h2{margin:0 0 14px;font-size:1.12rem}
+
+  .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .field label{display:block;font-weight:600;font-size:.9rem;margin-bottom:6px}
+  .field input,.field select{
+    width:100%;padding:13px 14px;font-size:1rem;color:var(--text);
+    background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;
+    min-height:50px;font-family:inherit;
+  }
+  .field input:focus,.field select:focus{
+    outline:none;border-color:var(--brand);background:#fff;
+    box-shadow:0 0 0 4px rgba(59,91,253,.14);
+  }
+  @media (max-width:620px){ .form-grid{grid-template-columns:1fr} }
+
+  .progress-wrap{margin:6px 0 4px}
+  .progress-label{
+    display:flex;justify-content:space-between;gap:10px;
+    font-size:.9rem;font-weight:600;color:var(--muted);margin-bottom:6px;
+  }
+  .progress-bar{height:11px;background:#e9edf6;border-radius:999px;overflow:hidden}
+  .progress-fill{
+    height:100%;width:0%;border-radius:999px;
+    background:linear-gradient(90deg,#3b5bfd,#6a3bfd);
+    transition:width .25s ease;
+  }
+
+  .item{
+    border:1px solid var(--line);border-radius:16px;padding:16px;
+    margin-bottom:12px;background:var(--surface);transition:border-color .15s, box-shadow .15s;
+  }
+  .item.done{border-color:#cfe3d8;background:#fbfefd}
+  .item-head{display:flex;gap:10px;align-items:flex-start}
+  .num{
+    flex:0 0 auto;width:28px;height:28px;border-radius:9px;background:var(--brand-soft);
+    color:var(--brand-dark);display:grid;place-items:center;font-weight:800;font-size:.85rem;
+  }
+  .item-text{flex:1;font-size:1rem}
+  .choices{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+  @media (max-width:480px){ .choices{grid-template-columns:1fr} }
+  .choice{
+    position:relative;display:flex;align-items:center;justify-content:center;gap:8px;
+    padding:13px 12px;border-radius:13px;border:2px solid var(--line);
+    background:var(--surface2);cursor:pointer;font-weight:600;font-size:.95rem;
+    text-align:center;min-height:52px;user-select:none;transition:all .15s;
+  }
+  .choice input{position:absolute;opacity:0;pointer-events:none}
+  .choice:hover{border-color:#b9c6ea;background:#f2f5ff}
+  .choice.sel-ok{border-color:var(--ok);background:var(--ok-soft);color:#0b7a44}
+  .choice.sel-no{border-color:var(--warn);background:var(--warn-soft);color:#a86600}
+
+  .actions{
+    position:sticky;bottom:0;z-index:10;
+    background:linear-gradient(180deg,rgba(244,246,251,0),var(--bg) 28%);
+    padding:16px 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  }
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:14px 20px;border-radius:13px;border:1.5px solid transparent;
+    font-weight:700;font-size:1rem;font-family:inherit;cursor:pointer;min-height:50px;
+    text-decoration:none;transition:all .15s;
+  }
+  .btn-primary{background:var(--brand);color:#fff}
+  .btn-primary:hover:not(:disabled){background:var(--brand-dark)}
+  .btn-primary:disabled{background:#c3ccdf;cursor:not-allowed}
+  .btn-ghost{background:#fff;color:var(--text);border-color:var(--line)}
+  .btn-ghost:hover{border-color:#b9c6ea;background:#f7f9ff}
+  .grow{flex:1 1 220px}
+
+  .status{
+    margin-top:10px;font-size:.9rem;color:var(--muted);
+    padding:11px 14px;border-radius:12px;background:var(--surface2);border:1px solid var(--line);
+  }
+  .status.ok{background:var(--ok-soft);border-color:#bfe3ce;color:#0b7a44}
+  .status.warn{background:var(--warn-soft);border-color:#f2ddab;color:#a86600}
+
+  .result{
+    border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);
+    box-shadow:var(--shadow);padding:22px;margin-bottom:18px;
+  }
+  .result-top{display:flex;flex-wrap:wrap;gap:18px;align-items:center;justify-content:space-between}
+  .score-ring{
+    width:120px;height:120px;border-radius:50%;display:grid;place-items:center;flex:0 0 auto;
+    background:conic-gradient(var(--brand) calc(var(--p)*1%), #e9edf6 0);
+    position:relative;
+  }
+  .score-ring::after{
+    content:"";position:absolute;inset:11px;background:var(--surface);border-radius:50%;
+  }
+  .score-ring span{position:relative;z-index:1;font-weight:800;font-size:1.25rem}
+  .result h2{margin:0 0 4px;font-size:1.15rem}
+  .stat-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+  .stat{
+    flex:1 1 130px;background:var(--surface2);border:1px solid var(--line);
+    border-radius:14px;padding:12px 14px;
+  }
+  .stat b{display:block;font-size:1.3rem;line-height:1.2}
+  .stat span{font-size:.82rem;color:var(--muted)}
+
+  .tip-list{margin:12px 0 0;padding-left:20px}
+  .tip-list li{margin-bottom:5px}
+
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px}
+  table{border-collapse:collapse;width:100%;min-width:520px;font-size:.92rem}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:var(--surface2);font-size:.82rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+  tbody tr:last-child td{border-bottom:none}
+  .pill{padding:3px 10px;border-radius:999px;font-size:.8rem;font-weight:700}
+  .pill.ok{background:var(--ok-soft);color:#0b7a44}
+  .pill.no{background:var(--warn-soft);color:#a86600}
+  .empty{text-align:center;color:var(--muted);padding:22px}
+  .btn-mini{
+    padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:#fff;
+    color:var(--bad);font-weight:700;font-size:.83rem;cursor:pointer;font-family:inherit;min-height:36px;
+  }
+  .btn-mini:hover{background:var(--bad-soft);border-color:#f3c4c6}
+  code.math-fallback{
+    background:#f1f3f8;border:1px solid var(--line);border-radius:6px;
+    padding:1px 6px;font-family:Consolas,monospace;font-size:.9em;
+  }
+  .katex{font-size:1.05em}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:20px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="home-btn" href="index.html">&#8962; Startseite</a>
+    <span class="topbar-title">Checkliste &middot; Ganzrationale Funktionen</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="eyebrow">Schritt 1 von 2</span>
+    <h1>Checkliste zur Vorbereitung</h1>
+    <p>Schätze jeden Punkt ehrlich ein. Du entscheidest: <strong>Kann ich schon</strong> oder <strong>Muss ich noch üben</strong>.</p>
+  </section>
+
+  <!-- ====== Wer bist du? ====== -->
+  <section class="card">
+    <h2>Deine Angaben</h2>
+    <div class="form-grid">
+      <div class="field">
+        <label for="name">Vorname</label>
+        <input type="text" id="name" placeholder="z. B. Lena" autocomplete="given-name" maxlength="40">
+      </div>
+      <div class="field">
+        <label for="kurs">Kurs</label>
+        <select id="kurs">
+          <option value="">– bitte wählen –</option>
+          <option value="GK1">GK1</option>
+          <option value="GK2">GK2</option>
+          <option value="GK3">GK3</option>
+          <option value="GK4">GK4</option>
+        </select>
+      </div>
+    </div>
+    <div class="progress-wrap" style="margin-top:16px">
+      <div class="progress-label"><span>Fortschritt</span><span id="progressText">0 von 16 bewertet</span></div>
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    </div>
+  </section>
+
+  <!-- ====== Die 16 Punkte ====== -->
+  <section class="card">
+    <h2>Ich kann&hellip;</h2>
+    <div id="liste"></div>
+    <div class="actions">
+      <button class="btn btn-primary grow" id="saveBtn" disabled>Ergebnisse speichern</button>
+      <button class="btn btn-ghost" id="resetBtn" type="button">Zurücksetzen</button>
+    </div>
+    <div class="status" id="statusBox" aria-live="polite">
+      Noch nicht alle Punkte bewertet – die Eingaben werden automatisch zwischengespeichert.
+    </div>
+  </section>
+
+  <!-- ====== Ergebnis ====== -->
+  <section id="resultArea" hidden></section>
+
+  <!-- ====== Lokale Tabelle ====== -->
+  <section class="card">
+    <h2>Meine bisherigen Einträge (auf diesem Gerät)</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>#</th><th>Datum</th><th>Kurs</th><th>Kann ich schon</th><th>Muss ich üben</th><th></th></tr>
+        </thead>
+        <tbody id="localTable"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="localEmpty">Noch keine Einträge vorhanden.</div>
+  </section>
+
+  <footer>&copy; Lernbereich Mathematik &middot; <a href="index.html" style="color:var(--brand-dark)">zurück zur Startseite</a></footer>
+</main>
+
+<script>
+/* =========================================================================
+   Firebase (Cloud-Speicherung) – Ergebnis wird zusätzlich lokal gespeichert
+   ========================================================================= */
+let _fbCache = null;
+async function getFirebase(){
+  if(_fbCache) return _fbCache;
+  const appMod = await import(FB_BASE + "/firebase-app.js");
+  const fsMod  = await import(FB_BASE + "/firebase-firestore.js");
+  const app = appMod.initializeApp(FIREBASE_CONFIG);
+  _fbCache = Object.assign({}, fsMod, { db: fsMod.getFirestore(app) });
+  return _fbCache;
+}
+async function fbSpeichern(daten){
+  const fb = await getFirebase();
+  await fb.addDoc(fb.collection(fb.db, FB_COLLECTION), Object.assign({}, daten, {
+    serverZeit: fb.serverTimestamp()
+  }));
+}
+
+/* =========================================================================
+   KaTeX-Hilfsfunktion m(...) – z. B. m('\\frac{1}{2}')
+   ========================================================================= */
+function m(tex, displayMode){
+  try{
+    if(window.katex){
+      return katex.renderToString(tex, { throwOnError:false, displayMode:!!displayMode, strict:false, output:'html' });
+    }
+  }catch(e){}
+  return '<code class="math-fallback">' + String(tex).replace(/[<>]/g,'') + '</code>';
+}
+
+/* =========================================================================
+   Die 16 "Ich kann..."-Sätze
+   ========================================================================= */
+const AUSSAGEN = [
+  'Ich kann eine ganzrationale Funktion als Bruchterm und als Polynom angeben, z. B. ' + m('f(x)=\\dfrac{p(x)}{q(x)}') + '.',
+  'Ich kann den Grad der ganzrationalen Funktion bestimmen und daraus die maximale Anzahl der Nullstellen ableiten.',
+  'Ich kann den Definitionsbereich einer ganzrationalen Funktion bestimmen, z. B. bei ' + m('f(x)=\\dfrac{2x+1}{x-3}') + '.',
+  'Ich kann kürzbare und nicht kürzbare Bruchterme unterscheiden und Brüche sinnvoll kürzen.',
+  'Ich kann die Definitionslücken berechnen und sie im Graphen als <strong>offene Kreise</strong> darstellen.',
+  'Ich kann die Nullstellen ganzrationaler Funktionen berechnen und ihre Vielfachheit bestimmen.',
+  'Ich kann aus der Vielfachheit einer Nullstelle auf den Vorzeichenwechsel am Graphen schließen.',
+  'Ich kann Nullstellen mit Vorzeichenschema, Substitution und Faktorisieren eingrenzen.',
+  'Ich kann Nullstellen ganzrationaler Funktionen näherungsweise bestimmen (z. B. Bisektion oder Newton-Verfahren).',
+  'Ich kann das Verhalten für ' + m('x\\to\\pm\\infty') + ' bestimmen und die waagerechte Asymptote angeben.',
+  'Ich kann vertikale Asymptoten bestimmen und am Graphen einzeichnen.',
+  'Ich kann die Schnittpunkte einer ganzrationalen Funktion mit den Koordinatenachsen berechnen.',
+  'Ich kann die Polynomdivision nutzen, um Bruchterme zu kürzen bzw. zu vereinfachen.',
+  'Ich kann Hoch- und Tiefpunkte mit Hilfe der Ableitungen bestimmen und Extrema einordnen.',
+  'Ich kann Änderungsraten (1. und 2. Ableitung) fachlich deuten.',
+  'Ich kann ein Sachmodell mit einer ganzrationalen Funktion aufstellen, lösen und auf Plausibilität prüfen.'
+];
+
+const KEY_DRAFT   = 'gr_checkliste_entwurf';
+const KEY_ENTRIES = 'gr_checkliste_ergebnisse';
+const KEY_ID      = 'gr_identitaet';
+
+/* =========================================================================
+   Zustand & Hilfsfunktionen
+   ========================================================================= */
+let antworten = new Array(AUSSAGEN.length).fill('');   // '' | 'ok' | 'no'
+
+function ladeEntwurf(){
+  try{
+    const roh = localStorage.getItem(KEY_DRAFT);
+    if(roh){
+      const d = JSON.parse(roh);
+      if(Array.isArray(d.antworten) && d.antworten.length === AUSSAGEN.length) antworten = d.antworten;
+      if(d.name) document.getElementById('name').value = d.name;
+      if(d.kurs) document.getElementById('kurs').value = d.kurs;
+    }
+  }catch(e){}
+  const id = ladeLokal(KEY_ID, null);
+  if(id && !document.getElementById('name').value) document.getElementById('name').value = id.name || '';
+  if(id && !document.getElementById('kurs').value && id.kurs) document.getElementById('kurs').value = id.kurs;
+}
+function ladeLokal(key, fallback){
+  try{
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : fallback;
+  }catch(e){ return fallback; }
+}
+function speichereLokal(key, wert){
+  try{ localStorage.setItem(key, JSON.stringify(wert)); }catch(e){}
+}
+function speichereEntwurf(){
+  speichereLokal(KEY_DRAFT, {
+    antworten:antworten,
+    name:document.getElementById('name').value.trim(),
+    kurs:document.getElementById('kurs').value
+  });
+}
+
+/* =========================================================================
+   Checkliste aufbauen
+   ========================================================================= */
+function baueListe(){
+  const box = document.getElementById('liste');
+  box.innerHTML = '';
+  AUSSAGEN.forEach(function(html, i){
+    const idOk  = 'ok_'  + i;
+    const idNo  = 'no_'  + i;
+    const el = document.createElement('div');
+    el.className = 'item';
+    el.id = 'item_' + i;
+    el.innerHTML =
+      '<div class="item-head">' +
+        '<div class="num">' + (i + 1) + '</div>' +
+        '<div class="item-text">' + html + '</div>' +
+      '</div>' +
+      '<div class="choices" role="radiogroup" aria-label="Bewertung für Punkt ' + (i + 1) + '">' +
+        '<label class="choice" data-wahl="ok" data-i="' + i + '">' +
+          '<input type="radio" name="p' + i + '" id="' + idOk + '" value="ok">' +
+          '<span>&#10003; Kann ich schon</span>' +
+        '</label>' +
+        '<label class="choice" data-wahl="no" data-i="' + i + '">' +
+          '<input type="radio" name="p' + i + '" id="' + idNo + '" value="no">' +
+          '<span>&#8635; Muss ich noch üben</span>' +
+        '</label>' +
+      '</div>';
+    box.appendChild(el);
+  });
+
+  box.addEventListener('change', function(e){
+    const inp = e.target.closest('input[type="radio"]');
+    if(!inp) return;
+    const i = parseInt(inp.name.substring(1), 10);
+    antworten[i] = inp.value;
+    markiere(i);
+    aktualisiereFortschritt();
+    speichereEntwurf();
+  });
+  box.addEventListener('click', function(e){
+    const lab = e.target.closest('.choice');
+    if(!lab) return;
+    e.preventDefault();
+    const i = parseInt(lab.dataset.i, 10);
+    const inp = document.querySelector('input[name="p' + i + '"][value="' + lab.dataset.wahl + '"]');
+    inp.checked = true;
+    antworten[i] = lab.dataset.wahl;
+    markiere(i);
+    aktualisiereFortschritt();
+    speichereEntwurf();
+  });
+}
+
+function markiere(i){
+  const el = document.getElementById('item_' + i);
+  el.classList.toggle('done', antworten[i] !== '');
+  el.querySelectorAll('.choice').forEach(function(c){
+    c.classList.remove('sel-ok','sel-no');
+    if(antworten[i] === 'ok')  c.classList.toggle('sel-ok',  c.dataset.wahl === 'ok');
+    if(antworten[i] === 'no')  c.classList.toggle('sel-no',  c.dataset.wahl === 'no');
+  });
+}
+
+function aktualisiereFortschritt(){
+  const erledigt = antworten.filter(function(a){ return a !== ''; }).length;
+  const gesamt = AUSSAGEN.length;
+  document.getElementById('progressFill').style.width = (erledigt / gesamt * 100) + '%';
+  document.getElementById('progressText').textContent = erledigt + ' von ' + gesamt + ' bewertet';
+
+  const btn = document.getElementById('saveBtn');
+  const box = document.getElementById('statusBox');
+  const nameOk = document.getElementById('name').value.trim() !== '';
+  const kursOk = document.getElementById('kurs').value !== '';
+  btn.disabled = !(erledigt === gesamt && nameOk && kursOk);
+
+  box.className = 'status';
+  if(erledigt < gesamt){
+    box.textContent = 'Noch ' + (gesamt - erledigt) + ' Punkt(e) zu bewerten – deine Eingaben werden automatisch zwischengespeichert.';
+  }else if(!nameOk || !kursOk){
+    box.textContent = 'Bitte gib oben deinen Vornamen und deinen Kurs an, dann kannst du speichern.';
+  }else{
+    box.className = 'status ok';
+    box.textContent = 'Alles bewertet – du kannst jetzt speichern und zum Selbsttest weitergehen.';
+  }
+}
+
+/* =========================================================================
+   Speichern (lokal + Firebase)
+   ========================================================================= */
+async function speichern(){
+  const name = document.getElementById('name').value.trim();
+  const kurs = document.getElementById('kurs').value;
+  const btn = document.getElementById('saveBtn');
+  btn.disabled = true;
+  btn.textContent = 'Wird gespeichert …';
+
+  const kann  = antworten.filter(function(a){ return a === 'ok'; }).length;
+  const muss  = antworten.filter(function(a){ return a === 'no'; }).length;
+  const prozent = Math.round(kann / AUSSAGEN.length * 100);
+
+  const eintrag = {
+    typ:'checkliste',
+    name:name,
+    kurs:kurs,
+    datum:new Date().toISOString(),
+    kannSchon:kann,
+    mussUeben:muss,
+    maxItems:AUSSAGEN.length,
+    prozent:prozent,
+    serverZeit:null
+  };
+
+  const lokale = ladeLokal(KEY_ENTRIES, []);
+  lokale.unshift(eintrag);
+  speichereLokal(KEY_ENTRIES, lokale.slice(0, 50));
+  speichereLokal(KEY_ID, { name:name, kurs:kurs });
+
+  let cloudText = '';
+  try{
+    await fbSpeichern({
+      typ:'checkliste', name:name, kurs:kurs,
+      datum:eintrag.datum, kannSchon:kann, mussUeben:muss,
+      maxItems:AUSSAGEN.length, prozent:prozent
+    });
+    cloudText = ' Das Ergebnis wurde zusätzlich in der Cloud gespeichert.';
+  }catch(err){
+    cloudText = ' Hinweis: Die Cloud-Speicherung ist gerade nicht erreichbar – dein Ergebnis ist trotzdem auf diesem Gerät gespeichert. ' +
+                'Falls die Seite direkt per Doppelklick geöffnet wurde, bitte einmal über einen Webserver bzw. &bdquo;Live Server&ldquo; öffnen.';
+  }
+
+  zeigeErgebnis(name, kurs, kann, muss, prozent, cloudText);
+  zeigeLokaleTabelle();
+  btn.textContent = 'Ergebnisse speichern';
+  btn.disabled = false;
+}
+
+/* =========================================================================
+   Ergebnisanzeige
+   ========================================================================= */
+function feedbackText(p){
+  if(p >= 85) return { titel:'Sehr gut vorbereitet!', text:'Du kannst die Themen sicher. Nur noch ein kurzer Blick auf die offenen Punkte &ndash; dann bist du startklar.', stil:'ok' };
+  if(p >= 70) return { titel:'Gut vorbereitet', text:'Das Wissen sitzt. Wiederhole die wenigen markierten Themen und du bist sicher.', stil:'ok' };
+  if(p >= 50) return { titel:'Solide Basis', text:'Ein Teil sitzt schon. Arbeite die markierten Punkte gezielt durch und mach danach den Selbsttest.', stil:'warn' };
+  return { titel:'Noch üben', text:'Hier fehlt noch einiges. Wiederhole das Thema komplett – danach hilft dir der Selbsttest beim Training.', stil:'no' };
+}
+
+function zeigeErgebnis(name, kurs, kann, muss, prozent, cloudText){
+  const fb = feedbackText(prozent);
+  const offen = [];
+  antworten.forEach(function(a, i){ if(a === 'no') offen.push('<li>' + (i + 1) + '. ' + AUSSAGEN[i] + '</li>'); });
+
+  document.getElementById('resultArea').innerHTML =
+    '<div class="result">' +
+      '<div class="result-top">' +
+        '<div>' +
+          '<h2>Dein Ergebnis: ' + fb.titel + '</h2>' +
+          '<p style="margin:0;color:var(--muted)">' + esc(name) + ' &middot; Kurs ' + esc(kurs) + '</p>' +
+          '<div class="stat-row">' +
+            '<div class="stat"><b style="color:var(--ok)">' + kann + '</b><span>Kann ich schon</span></div>' +
+            '<div class="stat"><b style="color:var(--warn)">' + muss + '</b><span>Muss ich noch üben</span></div>' +
+            '<div class="stat"><b>' + prozent + '%</b><span>Selbsteinschätzung</span></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="score-ring" style="--p:' + prozent + '"><span>' + prozent + '%</span></div>' +
+      '</div>' +
+      '<p style="margin:14px 0 0">' + fb.text + '</p>' +
+      (offen.length
+        ? '<p style="margin:16px 0 4px"><strong>Diese Themen solltest du noch üben:</strong></p><ul class="tip-list">' + offen.join('') + '</ul>'
+        : '<p class="status ok" style="margin-top:14px">Du hast alle Punkte sicher beantwortet.</p>') +
+      '<p class="status ok" style="margin-top:14px">&#10003; Gespeichert.' + esc(cloudText) + '</p>' +
+      '<div class="actions">' +
+        '<a class="btn btn-primary grow" href="selbsttest.html">Jetzt zum Selbsttest &rarr;</a>' +
+        '<a class="btn btn-ghost" href="index.html">Zur Startseite</a>' +
+      '</div>' +
+    '</div>';
+  document.getElementById('resultArea').hidden = false;
+  document.getElementById('resultArea').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+
+/* =========================================================================
+   Lokale Tabelle
+   ========================================================================= */
+function datumText(iso){
+  try{
+    return new Date(iso).toLocaleString('de-DE', {
+      day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'
+    });
+  }catch(e){ return iso; }
+}
+
+function zeigeLokaleTabelle(){
+  const liste = ladeLokal(KEY_ENTRIES, []);
+  const tbody = document.getElementById('localTable');
+  const empty = document.getElementById('localEmpty');
+  document.querySelector('.table-wrap').hidden = liste.length === 0;
+  empty.hidden = liste.length !== 0;
+  tbody.innerHTML = '';
+  liste.forEach(function(e, i){
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td>' + (i + 1) + '</td>' +
+      '<td>' + esc(datumText(e.datum)) + '</td>' +
+      '<td>' + esc(e.kurs) + '</td>' +
+      '<td><span class="pill ok">' + e.kannSchon + '</span></td>' +
+      '<td><span class="pill no">' + e.mussUeben + '</span></td>' +
+      '<td><button class="btn-mini" data-del="' + i + '">Löschen</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+/* =========================================================================
+   Start
+   ========================================================================= */
+window.addEventListener('DOMContentLoaded', function(){
+  baueListe();
+  ladeEntwurf();
+  antworten.forEach(function(_, i){ markiere(i); });
+  aktualisiereFortschritt();
+  zeigeLokaleTabelle();
+
+  ['name','kurs'].forEach(function(id){
+    document.getElementById(id).addEventListener('input', function(){
+      speichereEntwurf();
+      aktualisiereFortschritt();
+    });
+    document.getElementById(id).addEventListener('change', function(){
+      speichereEntwurf();
+      aktualisiereFortschritt();
+    });
+  });
+
+  document.getElementById('saveBtn').addEventListener('click', speichern);
+  document.getElementById('resetBtn').addEventListener('click', function(){
+    if(!confirm('Alle Bewertungen wirklich zurücksetzen?')) return;
+    antworten = new Array(AUSSAGEN.length).fill('');
+    speichereEntwurf();
+    antworten.forEach(function(_, i){ markiere(i); });
+    aktualisiereFortschritt();
+    document.getElementById('resultArea').hidden = true;
+    document.getElementById('statusBox').className = 'status';
+    document.getElementById('statusBox').textContent = 'Zurückgesetzt – alle Eingaben wurden gelöscht.';
+  });
+
+  document.getElementById('localTable').addEventListener('click', function(e){
+    const b = e.target.closest('button[data-del]');
+    if(!b) return;
+    const liste = ladeLokal(KEY_ENTRIES, []);
+    liste.splice(parseInt(b.dataset.del, 10), 1);
+    speichereLokal(KEY_ENTRIES, liste);
+    zeigeLokaleTabelle();
+  });
+});
+</script>
+</body>
+</html>

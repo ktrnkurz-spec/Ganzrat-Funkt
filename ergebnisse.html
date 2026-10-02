@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lehrerauswertung – Ganzrationale Funktionen</title>
+
+<!-- KaTeX (Formeln) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<!--
+  ═══════════════════════════════════════════════════════════════════════
+  FIREBASE-KONFIGURATION
+  Collection "ergebnisse": { typ: "checkliste"|"selbsttest", name, kurs, datum, … }
+
+  HINWEIS FÜR DIE EINRICHTUNG (nur einmal nötig):
+  In der Firebase-Konsole -> Firestore Database -> Regeln, empfohlen:
+
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /ergebnisse/{id} {
+          allow read, write: if true;
+        }
+      }
+    }
+
+  (Das ist für ein Schulprojekt gedacht. Für einen produktiven Einsatz
+  bitte die Regeln einschränken, z. B. über eine Anmeldung.)
+  ═══════════════════════════════════════════════════════════════════════
+-->
+<script>
+  const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyC44fi1xbS-IgOH2cjdQ6CTp3wQLAKvh7A",
+    authDomain: "ganzrationale-funktionen-64c93.firebaseapp.com",
+    projectId: "ganzrationale-funktionen-64c93",
+    storageBucket: "ganzrationale-funktionen-64c93.firebasestorage.app",
+    messagingSenderId: "491561092747",
+    appId: "1:491561092747:web:6caae14b22d0e9489db68e"
+  };
+  const FB_VERSION = "12.19.0";
+  const FB_BASE = "https://www.gstatic.com/firebasejs/" + FB_VERSION;
+  const FB_COLLECTION = "ergebnisse";
+
+  /* Passwort-Schutz: SHA-256 von "EF 2026"
+     (Fallback für Browser ohne WebCrypto, z. B. in sehr alten Ansichten) */
+  const PASSWORT_SHA256 = "569656b26e315c5afdadceaf5148204aae69a433cd5add225759c669eb11e4fa";
+  const PASSWORT_KLAR = "EF 2026";
+  const MAX_ALTER_TAGE = 365;
+</script>
+
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --surface:#ffffff;
+    --surface2:#f7f9fd;
+    --text:#16202f;
+    --muted:#5b6b83;
+    --line:#e3e8f2;
+    --brand:#3b5bfd;
+    --brand-dark:#2740c9;
+    --brand-soft:#eaeeff;
+    --ok:#0f9d58;
+    --ok-soft:#e6f6ed;
+    --warn:#d98600;
+    --warn-soft:#fff5e0;
+    --bad:#e5484d;
+    --bad-soft:#fdeced;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(20,35,80,.09);
+    --shadow-sm:0 4px 14px rgba(20,35,80,.07);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);color:var(--text);line-height:1.6;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:30;
+    background:linear-gradient(135deg,#2b3446 0%,#3b5bfd 100%);
+    color:#fff;box-shadow:var(--shadow-sm);
+  }
+  .topbar-inner{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .home-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.16);color:#fff;text-decoration:none;
+    border:1px solid rgba(255,255,255,.35);padding:9px 14px;border-radius:999px;
+    font-weight:600;font-size:.95rem;min-height:42px;
+  }
+  .home-btn:hover{background:rgba(255,255,255,.28)}
+  .topbar-title{font-weight:700;font-size:1rem}
+  .wrap{max-width:1100px;margin:0 auto;padding:22px 16px 60px}
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;margin-bottom:18px;
+  }
+  .hero{
+    background:linear-gradient(135deg,#ffffff 0%,#f2f5ff 100%);
+    border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:24px 22px;margin-bottom:18px;
+  }
+  .hero h1{margin:0 0 6px;font-size:clamp(1.35rem,3.6vw,1.9rem)}
+  .hero p{margin:0;color:var(--muted)}
+  .eyebrow{display:inline-block;background:var(--brand-soft);color:var(--brand-dark);border-radius:999px;
+    padding:4px 12px;font-size:.75rem;font-weight:700;letter-spacing:.4px;margin-bottom:10px}
+
+  .gate{max-width:430px;margin:28px auto;text-align:center}
+  .lock{
+    width:74px;height:74px;border-radius:22px;background:var(--brand-soft);
+    display:grid;place-items:center;font-size:2.1rem;margin:0 auto 14px;
+  }
+  .field label{display:block;font-weight:600;font-size:.9rem;margin-bottom:6px;text-align:left}
+  input,select{
+    width:100%;padding:13px 14px;font-size:1rem;color:var(--text);
+    background:var(--surface2);border:1.5px solid var(--line);border-radius:12px;
+    min-height:50px;font-family:inherit;
+  }
+  input:focus,select:focus{
+    outline:none;border-color:var(--brand);background:#fff;box-shadow:0 0 0 4px rgba(59,91,253,.14);
+  }
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:14px 20px;border-radius:13px;border:1.5px solid transparent;
+    font-weight:700;font-size:1rem;font-family:inherit;cursor:pointer;min-height:50px;
+    text-decoration:none;transition:all .15s;
+  }
+  .btn-primary{background:var(--brand);color:#fff;width:100%}
+  .btn-primary:hover:not(:disabled){background:var(--brand-dark)}
+  .btn-primary:disabled{background:#c3ccdf;cursor:not-allowed}
+  .btn-ghost{background:#fff;color:var(--text);border-color:var(--line)}
+  .btn-ghost:hover{border-color:#b9c6ea;background:#f7f9ff}
+  .btn-ok{background:var(--ok);color:#fff}
+  .btn-ok:hover{background:#0b7a44}
+  .btn-danger{background:var(--bad);color:#fff}
+  .btn-danger:hover{background:#c3373b}
+  .grow{flex:1 1 200px}
+
+  .status{margin-top:12px;font-size:.9rem;color:var(--muted);padding:11px 14px;border-radius:12px;
+    background:var(--surface2);border:1px solid var(--line);text-align:left}
+  .status.ok{background:var(--ok-soft);border-color:#bfe3ce;color:#0b7a44}
+  .status.warn{background:var(--warn-soft);border-color:#f2ddab;color:#a86600}
+  .status.err{background:var(--bad-soft);border-color:#f3c4c6;color:#c3373b}
+
+  .stat-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:18px}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:15px 16px;box-shadow:var(--shadow-sm)}
+  .stat b{display:block;font-size:1.5rem;line-height:1.2}
+  .stat span{font-size:.83rem;color:var(--muted)}
+
+  .toolbar{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;margin-bottom:14px}
+  .toolbar .field{flex:1 1 180px;min-width:150px}
+
+  .table-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border:1px solid var(--line);border-radius:14px}
+  table{border-collapse:collapse;width:100%;min-width:660px;font-size:.93rem}
+  th,td{padding:11px 13px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:var(--surface2);font-size:.8rem;text-transform:uppercase;letter-spacing:.4px;color:var(--muted);position:sticky;top:0}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:#fafbff}
+  .pill{padding:3px 10px;border-radius:999px;font-size:.78rem;font-weight:700;display:inline-block}
+  .pill.ok{background:var(--ok-soft);color:#0b7a44}
+  .pill.no{background:var(--bad-soft);color:#c3373b}
+  .pill.mid{background:var(--warn-soft);color:#a86600}
+  .pill.typ{background:var(--brand-soft);color:var(--brand-dark);margin-left:8px}
+  .empty{text-align:center;color:var(--muted);padding:30px}
+  .btn-mini{padding:7px 11px;border-radius:9px;border:1px solid var(--line);background:#fff;
+    color:var(--bad);font-weight:700;font-size:.83rem;cursor:pointer;font-family:inherit;min-height:36px}
+  .btn-mini:hover{background:var(--bad-soft);border-color:#f3c4c6}
+  .hint{font-size:.85rem;color:var(--muted);margin-top:10px}
+  .hidden{display:none !important}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:20px}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <a class="home-btn" href="index.html">&#8962; Startseite</a>
+    <span class="topbar-title">Lehrerauswertung &middot; Ganzrationale Funktionen</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ================= Passwort ================= -->
+  <section id="gateView">
+    <div class="hero">
+      <span class="eyebrow">Nur für Lehrkräfte</span>
+      <h1>Ergebnisse ansehen</h1>
+      <p>Hier werden alle Checklisten und Selbsttests der Klassen angezeigt.</p>
+    </div>
+    <div class="card gate">
+      <div class="lock">&#128274;</div>
+      <h2 style="margin:0 0 14px">Passwort eingeben</h2>
+      <div class="field" style="margin-bottom:14px">
+        <label for="pw">Passwort</label>
+        <input type="password" id="pw" placeholder="Passwort" autocomplete="current-password">
+      </div>
+      <button class="btn btn-primary" id="loginBtn">Auswertung öffnen</button>
+      <div class="status" id="loginStatus" aria-live="polite">Bitte das Passwort eingeben.</div>
+      <p class="hint" style="text-align:center">
+        <a href="index.html" style="color:var(--brand-dark)">zurück zur Startseite</a>
+      </p>
+    </div>
+  </section>
+
+  <!-- ================= Auswertung ================= -->
+  <section id="dataView" hidden>
+    <div class="hero">
+      <span class="eyebrow">Auswertung</span>
+      <h1>Ergebnisse der Klasse</h1>
+      <p id="headInfo">Alle Einträge aus der Cloud.</p>
+    </div>
+
+    <div class="stat-row" id="statRow"></div>
+
+    <div class="card">
+      <div class="toolbar">
+        <div class="field">
+          <label for="filterKurs">Nach Kurs filtern</label>
+          <select id="filterKurs">
+            <option value="">Alle Kurse</option>
+            <option value="GK1">GK1</option>
+            <option value="GK2">GK2</option>
+            <option value="GK3">GK3</option>
+            <option value="GK4">GK4</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="filterTyp">Nach Art filtern</label>
+          <select id="filterTyp">
+            <option value="">Alle (Checkliste + Selbsttest)</option>
+            <option value="selbsttest">Nur Selbsttests</option>
+            <option value="checkliste">Nur Checklisten</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="reloadBtn">&nbsp;</label>
+          <button class="btn btn-ghost" id="reloadBtn" style="width:100%">&#8635; Neu laden</button>
+        </div>
+      </div>
+
+      <div class="actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn btn-ok grow" id="csvBtn">&#8681; CSV-Export (gefiltert)</button>
+        <button class="btn btn-danger" id="clearBtn">Alle löschen</button>
+      </div>
+
+      <div class="status" id="infoBox" aria-live="polite">Lade Ergebnisse …</div>
+
+      <div class="table-wrap" id="tableWrap" style="margin-top:14px">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Kurs</th><th>Datum</th><th>Ergebnis</th><th></th></tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="empty" id="emptyBox" hidden>Keine Einträge für diese Auswahl.</div>
+      <p class="hint">Einträge, die älter als 1 Jahr sind, werden beim Laden automatisch gelöscht.</p>
+    </div>
+  </section>
+
+  <footer>&copy; Lernbereich Mathematik &middot; <a href="index.html" style="color:var(--brand-dark)">zurück zur Startseite</a></footer>
+</main>
+
+<script>
+/* =========================================================================
+   Firebase
+   ========================================================================= */
+let _fbCache = null;
+async function getFirebase(){
+  if(_fbCache) return _fbCache;
+  const appMod = await import(FB_BASE + "/firebase-app.js");
+  const fsMod  = await import(FB_BASE + "/firebase-firestore.js");
+  const app = appMod.initializeApp(FIREBASE_CONFIG);
+  _fbCache = Object.assign({}, fsMod, { db: fsMod.getFirestore(app) });
+  return _fbCache;
+}
+
+const KEY_CL  = 'gr_checkliste_ergebnisse';
+const KEY_ST  = 'gr_selbsttest_versuche';
+const KEY_PW  = 'gr_lehrer_offen';
+
+let eintraege = [];   // { id, typ, name, kurs, datum, ... }
+
+/* =========================================================================
+   KaTeX-Hilfsfunktion m(...)
+   ========================================================================= */
+function m(tex, displayMode){
+  try{
+    if(window.katex){
+      return katex.renderToString(tex, { throwOnError:false, displayMode:!!displayMode, strict:false, output:'html' });
+    }
+  }catch(e){}
+  return '<code style="background:#f1f3f8;border:1px solid #e3e8f2;border-radius:6px;padding:1px 6px">' +
+         String(tex).replace(/[<>]/g,'') + '</code>';
+}
+function esc(s){
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function(c){
+    return { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c];
+  });
+}
+
+/* =========================================================================
+   Passwort prüfen
+   ========================================================================= */
+async function passwortOk(pw){
+  if(window.crypto && window.crypto.subtle && window.TextEncoder){
+    try{
+      const daten = new TextEncoder().encode(pw);
+      const hash  = await crypto.subtle.digest('SHA-256', daten);
+      const hex   = Array.from(new Uint8Array(hash)).map(function(b){
+        return b.toString(16).padStart(2, '0');
+      }).join('');
+      return hex === PASSWORT_SHA256;
+    }catch(e){ /* Fallback unten */ }
+  }
+  return pw === PASSWORT_KLAR;
+}
+
+async function anmelden(){
+  const box = document.getElementById('loginStatus');
+  const pw  = document.getElementById('pw').value;
+  const btn = document.getElementById('loginBtn');
+  if(!pw){ box.className = 'status warn'; box.textContent = 'Bitte zuerst das Passwort eingeben.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Wird geprüft …';
+  const ok = await passwortOk(pw);
+  if(!ok){
+    btn.disabled = false;
+    btn.textContent = 'Auswertung öffnen';
+    box.className = 'status err';
+    box.textContent = 'Passwort ist leider falsch. Bitte erneut versuchen.';
+    document.getElementById('pw').select();
+    return;
+  }
+  box.className = 'status ok';
+  box.textContent = 'Passwort korrekt – Auswertung wird geladen …';
+  try{ sessionStorage.setItem(KEY_PW, '1'); }catch(e){}
+  document.getElementById('gateView').hidden = true;
+  document.getElementById('dataView').hidden = false;
+  btn.disabled = false;
+  btn.textContent = 'Auswertung öffnen';
+  document.getElementById('pw').value = '';
+  await ladeErgebnisse();
+}
+
+/* =========================================================================
+   Ergebnisse laden
+   ========================================================================= */
+async function ladeErgebnisse(){
+  const box = document.getElementById('infoBox');
+  box.className = 'status';
+  box.innerHTML = '&#9203; Lade Ergebnisse aus der Cloud …';
+
+  let quelle = 'cloud';
+  try{
+    const fb = await getFirebase();
+    const snap = await fb.getDocs(fb.collection(fb.db, FB_COLLECTION));
+    eintraege = snap.docs.map(function(d){
+      const x = d.data() || {};
+      return {
+        id:d.id,
+        typ:(x.typ === 'checkliste') ? 'checkliste' : 'selbsttest',
+        name:x.name || 'unbekannt',
+        kurs:x.kurs || '–',
+        datum:x.datum || null,
+        punkte:(x.punkte != null) ? x.punkte : null,
+        maxPunkte:(x.maxPunkte != null) ? x.maxPunkte : null,
+        prozent:(x.prozent != null) ? x.prozent : null,
+        note:x.note || '',
+        richtig:x.richtig, falsch:x.falsch, themen:x.themen || '',
+        kannSchon:(x.kannSchon != null) ? x.kannSchon : null,
+        mussUeben:(x.mussUeben != null) ? x.mussUeben : null,
+        maxItems:(x.maxItems != null) ? x.maxItems : null
+      };
+    });
+  }catch(err){
+    quelle = 'lokal';
+    console.warn('Firebase:', err);
+    eintraege = lokaleEintraege();
+    box.className = 'status warn';
+    box.innerHTML = '&#9888; Die Cloud konnte nicht erreicht werden (' + esc(err && err.code ? err.code : 'Fehler') +
+      '). Angezeigt werden die Einträge, die auf <strong>diesem Gerät</strong> gespeichert sind.';
+  }
+
+  eintraege = eintraege.filter(function(e){ return !!e.datum; });
+  eintraege.sort(function(a, b){ return new Date(b.datum) - new Date(a.datum); });
+
+  /* --- Abgelaufene Einträge (älter als 1 Jahr) automatisch löschen --- */
+  const grenze = new Date().getTime() - MAX_ALTER_TAGE * 24 * 60 * 60 * 1000;
+  const abgelaufen = eintraege.filter(function(e){ return new Date(e.datum).getTime() < grenze; });
+  let geloescht = 0;
+  if(abgelaufen.length){
+    if(quelle === 'cloud'){
+      geloescht = await loescheDokumente(abgelaufen.map(function(e){ return e.id; }));
+    }else{
+      geloescht = abgelaufen.length;
+    }
+    const ids = abgelaufen.map(function(e){ return e.id; });
+    eintraege = eintraege.filter(function(e){ return ids.indexOf(e.id) === -1; });
+  }
+
+  zeige();
+  if(quelle === 'cloud'){
+    box.className = 'status ok';
+    box.textContent = '✓ ' + eintraege.length + (eintraege.length === 1 ? ' Eintrag geladen' : ' Einträge geladen') +
+      (geloescht ? ' · ' + geloescht + (geloescht === 1 ? ' veralteter Eintrag' : ' veraltete Einträge') +
+        ' (älter als 1 Jahr) automatisch gelöscht.' : '.');
+  }
+  document.getElementById('headInfo').innerHTML = quelle === 'cloud'
+    ? 'Datenquelle: Cloud (Firebase) &middot; Checklisten und Selbsttests aller Kurse.'
+    : 'Datenquelle: nur lokale Speicherung dieses Geräts.';
+}
+
+async function loescheDokumente(ids){
+  const fb = await getFirebase();
+  let n = 0;
+  for(let i = 0; i < ids.length; i += 400){
+    const teil = ids.slice(i, i + 400);
+    if(fb.writeBatch){
+      const batch = fb.writeBatch(fb.db);
+      teil.forEach(function(id){ batch.delete(fb.doc(fb.db, FB_COLLECTION, id)); });
+      await batch.commit();
+    }else{
+      for(let j = 0; j < teil.length; j++){
+        await fb.deleteDoc(fb.doc(fb.db, FB_COLLECTION, teil[j]));
+      }
+    }
+    n += teil.length;
+  }
+  return n;
+}
+
+/* Lokale Einträge als Ersatz, falls die Cloud nicht erreichbar ist */
+function lokaleEintraege(){
+  const out = [];
+  lade(KEY_CL, []).forEach(function(e, i){
+    out.push({
+      id:'lcl' + i, typ:'checkliste', name:e.name, kurs:e.kurs, datum:e.datum,
+      kannSchon:e.kannSchon, mussUeben:e.mussUeben, maxItems:e.maxItems, prozent:e.prozent, note:''
+    });
+  });
+  lade(KEY_ST, []).forEach(function(e, i){
+    out.push({
+      id:'lcs' + i, typ:'selbsttest', name:(lade(KEY_ID, {}) || {}).name || '–', kurs:e.kurs,
+      datum:e.datum, punkte:e.punkte, maxPunkte:e.maxPunkte, prozent:e.prozent, note:e.note
+    });
+  });
+  return out;
+}
+function lade(key, fallback){
+  try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }
+  catch(e){ return fallback; }
+}
+
+/* =========================================================================
+   Anzeige
+   ========================================================================= */
+function filterEintraege(){
+  const k = document.getElementById('filterKurs').value;
+  const t = document.getElementById('filterTyp').value;
+  return eintraege.filter(function(e){
+    if(k && e.kurs !== k) return false;
+    if(t && e.typ !== t) return false;
+    return true;
+  });
+}
+
+function zeige(){
+  const liste = filterEintraege();
+  zeigeStats();
+  zeigeTabelle(liste);
+}
+
+function zeigeStats(){
+  const liste = filterEintraege();
+  const schueler = {};
+  liste.forEach(function(e){ schueler[(e.name || '') + '|' + (e.kurs || '')] = 1; });
+  const tests = liste.filter(function(e){ return e.typ === 'selbsttest' && e.prozent != null; });
+  const avg = tests.length ? Math.round(tests.reduce(function(s, e){ return s + e.prozent; }, 0) / tests.length) : null;
+  const cl = liste.filter(function(e){ return e.typ === 'checkliste'; });
+
+  document.getElementById('statRow').innerHTML =
+    '<div class="stat"><b>' + liste.length + '</b><span>Einträge</span></div>' +
+    '<div class="stat"><b>' + Object.keys(schueler).length + '</b><span>Schülerinnen und Schüler</span></div>' +
+    '<div class="stat"><b>' + tests.length + '</b><span>Selbsttests</span></div>' +
+    '<div class="stat"><b>' + cl.length + '</b><span>Checklisten</span></div>' +
+    '<div class="stat"><b>' + (avg === null ? '–' : avg + '%') + '</b><span>Ø Prozent (Selbsttests)</span></div>';
+}
+
+function ergebnisText(e){
+  if(e.typ === 'checkliste'){
+    return 'Kann ich schon: ' + (e.kannSchon != null ? e.kannSchon : '–') + '/' + (e.maxItems || 16) +
+      (e.mussUeben != null ? ' &middot; noch üben: ' + e.mussUeben : '');
+  }
+  return (e.punkte != null ? e.punkte + '/' + e.maxPunkte + ' Punkte' : '–') +
+    (e.prozent != null ? ' (' + e.prozent + ' %)' : '') +
+    (e.note ? ' – ' + esc(e.note) : '');
+}
+
+function prozentPille(p){
+  if(p == null) return '<span class="pill mid">–</span>';
+  if(p >= 70) return '<span class="pill ok">' + p + ' %</span>';
+  if(p >= 50) return '<span class="pill mid">' + p + ' %</span>';
+  return '<span class="pill no">' + p + ' %</span>';
+}
+
+function zeigeTabelle(liste){
+  const tbody = document.getElementById('tbody');
+  document.getElementById('tableWrap').hidden = liste.length === 0;
+  document.getElementById('emptyBox').hidden = liste.length !== 0;
+  tbody.innerHTML = '';
+  liste.forEach(function(e){
+    const tr = document.createElement('tr');
+    tr.innerHTML =
+      '<td><strong>' + esc(e.name) + '</strong>' +
+        '<span class="pill typ">' + (e.typ === 'checkliste' ? 'Checkliste' : 'Selbsttest') + '</span></td>' +
+      '<td>' + esc(e.kurs) + '</td>' +
+      '<td>' + esc(datumText(e.datum)) + '</td>' +
+      '<td>' + (e.typ === 'selbsttest'
+            ? (e.punkte != null ? '<strong>' + e.punkte + ' / ' + e.maxPunkte + '</strong> &nbsp; ' : '') + prozentPille(e.prozent) +
+              (e.themen ? '<div class="hint" style="white-space:normal;max-width:340px">Offen: ' + esc(e.themen) + '</div>' : '')
+            : ergebnisText(e) + ' &nbsp; ' + prozentPille(e.prozent)) +
+      '</td>' +
+      '<td><button class="btn-mini" data-del="' + e.id + '">Löschen</button></td>';
+    tbody.appendChild(tr);
+  });
+}
+
+function datumText(iso){
+  try{
+    return new Date(iso).toLocaleString('de-DE', {
+      day:'2-digit', month:'2-digit', year:'2-digit', hour:'2-digit', minute:'2-digit'
+    });
+  }catch(e){ return String(iso); }
+}
+
+/* =========================================================================
+   CSV-Export
+   ========================================================================= */
+function csvFeld(wert){
+  let s = String(wert == null ? '' : wert);
+  /* Formel-Injection in Tabellenprogrammen verhindern */
+  if(/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return '"' + s.replace(/"/g, '""') + '"';
+}
+
+function csvExport(){
+  const liste = filterEintraege();
+  if(!liste.length){
+    const box = document.getElementById('infoBox');
+    box.className = 'status warn';
+    box.textContent = 'Es gibt keine Einträge für die aktuelle Auswahl – es wurde keine Datei erzeugt.';
+    return;
+  }
+  const kopf = ['Name', 'Kurs', 'Datum', 'Art', 'Punkte', 'MaxPunkte', 'Prozent', 'Bewertung', 'Kann ich schon', 'Muss ich noch üben', 'Offene Themen'];
+  const zeilen = liste.map(function(e){
+    return [
+      e.name,
+      e.kurs,
+      new Date(e.datum).toLocaleString('de-DE'),
+      e.typ === 'checkliste' ? 'Checkliste' : 'Selbsttest',
+      e.typ === 'selbsttest' ? e.punkte : e.kannSchon,
+      e.typ === 'selbsttest' ? e.maxPunkte : e.maxItems,
+      e.prozent != null ? e.prozent : '',
+      e.note || '',
+      e.kannSchon != null ? e.kannSchon : '',
+      e.mussUeben != null ? e.mussUeben : '',
+      e.themen || ''
+    ].map(csvFeld).join(';');
+  });
+
+  const inhalt = '\uFEFF' + kopf.map(csvFeld).join(';') + '\r\n' + zeilen.join('\r\n');
+  const blob = new Blob([inhalt], { type:'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const st   = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = 'ergebnisse-ganzrationale-funktionen-' + st + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+
+  const box = document.getElementById('infoBox');
+  box.className = 'status ok';
+  box.textContent = '✓ CSV mit ' + liste.length + (liste.length === 1 ? ' Eintrag' : ' Einträgen') + ' wurde heruntergeladen.';
+}
+
+/* =========================================================================
+   Alles löschen
+   ========================================================================= */
+async function allesLoeschen(){
+  const anzahl = filterEintraege().length;
+  const msg = 'Wirklich ALLE ' + eintraege.length + ' Einträge unwiderruflich löschen?\n\n' +
+              (anzahl !== eintraege.length
+                ? 'Achtung: Es wird nicht nur die gefilterte Auswahl (' + anzahl + '), sondern die gesamte Sammlung gelöscht.\n\n'
+                : '\n') +
+              'Das kann nicht rückgängig gemacht werden.';
+  if(!confirm(msg)) return;
+
+  const btn = document.getElementById('clearBtn');
+  btn.disabled = true;
+  btn.textContent = 'Lösche …';
+
+  const box = document.getElementById('infoBox');
+  try{
+    await loescheDokumente(eintraege.map(function(e){ return e.id; }));
+    eintraege = [];
+    zeige();
+    box.className = 'status ok';
+    box.textContent = '✓ Alle Einträge wurden gelöscht.';
+  }catch(err){
+    box.className = 'status err';
+    box.textContent = '✗ Löschen fehlgeschlagen (' + esc(err && err.code ? err.code : 'Fehler') + '). ' +
+      'Bitte prüfen, ob die Zugriffsrechte in Firebase ausreichen.';
+  }
+  btn.disabled = false;
+  btn.textContent = 'Alle löschen';
+}
+
+/* =========================================================================
+   Start
+   ========================================================================= */
+window.addEventListener('DOMContentLoaded', function(){
+  document.getElementById('loginBtn').addEventListener('click', anmelden);
+  document.getElementById('pw').addEventListener('keydown', function(e){
+    if(e.key === 'Enter') anmelden();
+  });
+  document.getElementById('filterKurs').addEventListener('change', zeige);
+  document.getElementById('filterTyp').addEventListener('change', zeige);
+  document.getElementById('csvBtn').addEventListener('click', csvExport);
+  document.getElementById('clearBtn').addEventListener('click', allesLoeschen);
+  document.getElementById('reloadBtn').addEventListener('click', ladeErgebnisse);
+
+  document.getElementById('tbody').addEventListener('click', async function(e){
+    const b = e.target.closest('button[data-del]');
+    if(!b) return;
+    if(!confirm('Diesen Eintrag wirklich löschen?')) return;
+    const id = b.dataset.del;
+    try{
+      if(id.indexOf('lcl') !== 0 && id.indexOf('lcs') !== 0){
+        const fb = await getFirebase();
+        await fb.deleteDoc(fb.doc(fb.db, FB_COLLECTION, id));
+      }
+    }catch(err){
+      const box = document.getElementById('infoBox');
+      box.className = 'status err';
+      box.textContent = '✗ Löschen fehlgeschlagen (' + esc(err && err.code ? err.code : 'Fehler') + ').';
+      return;
+    }
+    eintraege = eintraege.filter(function(x){ return x.id !== id; });
+    zeige();
+  });
+
+  /* In dieser Sitzung bereits angemeldet? Dann direkt Auswertung zeigen. */
+  let offen = false;
+  try{ offen = sessionStorage.getItem(KEY_PW) === '1'; }catch(e){}
+  if(offen){
+    document.getElementById('gateView').hidden = true;
+    document.getElementById('dataView').hidden = false;
+    ladeErgebnisse();
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ganzrationale Funktionen – Lernbereich</title>
+
+<!-- KaTeX (Formeln) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+
+<style>
+  :root{
+    --bg:#f4f6fb;
+    --surface:#ffffff;
+    --surface2:#f7f9fd;
+    --text:#16202f;
+    --muted:#5b6b83;
+    --line:#e3e8f2;
+    --brand:#3b5bfd;
+    --brand-dark:#2740c9;
+    --brand-soft:#eaeeff;
+    --ok:#0f9d58;
+    --bad:#e5484d;
+    --radius:18px;
+    --shadow:0 10px 30px rgba(20,35,80,.09);
+    --shadow-sm:0 4px 14px rgba(20,35,80,.07);
+  }
+  *{box-sizing:border-box}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    font-family:"Segoe UI",system-ui,-apple-system,Roboto,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    line-height:1.6;
+  }
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    background:linear-gradient(135deg,#3b5bfd 0%,#6a3bfd 100%);
+    color:#fff;
+    box-shadow:var(--shadow-sm);
+  }
+  .topbar-inner{
+    max-width:1000px;margin:0 auto;
+    padding:10px 16px;
+    display:flex;align-items:center;gap:12px;flex-wrap:wrap;
+  }
+  .home-btn{
+    display:inline-flex;align-items:center;gap:8px;
+    background:rgba(255,255,255,.16);
+    color:#fff;text-decoration:none;
+    border:1px solid rgba(255,255,255,.35);
+    padding:9px 14px;border-radius:999px;
+    font-weight:600;font-size:.95rem;
+    min-height:42px;
+  }
+  .home-btn:hover{background:rgba(255,255,255,.28)}
+  .topbar-title{font-weight:700;font-size:1rem;letter-spacing:.2px}
+  .wrap{max-width:1000px;margin:0 auto;padding:22px 16px 60px}
+  .hero{
+    background:linear-gradient(135deg,#ffffff 0%,#f2f5ff 100%);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    box-shadow:var(--shadow);
+    padding:28px 22px;
+    margin-bottom:22px;
+    text-align:center;
+  }
+  .hero h1{
+    margin:6px 0 8px;
+    font-size:clamp(1.6rem,4.4vw,2.4rem);
+    line-height:1.2;
+    background:linear-gradient(135deg,#3b5bfd,#6a3bfd);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .hero p{margin:0 auto 14px;max-width:60ch;color:var(--muted)}
+  .badge{
+    display:inline-block;background:var(--brand-soft);color:var(--brand-dark);
+    border-radius:999px;padding:5px 14px;font-size:.8rem;font-weight:700;letter-spacing:.4px;
+  }
+  .formula-row{
+    display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:14px;
+  }
+  .formula{
+    background:#fff;border:1px solid var(--line);border-radius:14px;
+    padding:8px 14px;box-shadow:var(--shadow-sm);overflow-x:auto;max-width:100%;
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+  }
+  .formula-label{font-size:.72rem;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--muted)}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:16px}
+  .card{
+    display:flex;flex-direction:column;
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    box-shadow:var(--shadow);padding:22px;text-decoration:none;color:inherit;
+    transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  }
+  .card:hover{transform:translateY(-3px);box-shadow:0 16px 36px rgba(20,35,80,.14);border-color:#c9d5f5}
+  .card .icon{
+    width:52px;height:52px;border-radius:14px;display:grid;place-items:center;
+    font-size:1.6rem;background:var(--brand-soft);margin-bottom:14px;
+  }
+  .card h2{margin:0 0 6px;font-size:1.18rem}
+  .card p{margin:0 0 16px;color:var(--muted);font-size:.95rem;flex:1}
+  .card .cta{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    background:var(--brand);color:#fff;border-radius:12px;padding:12px 16px;
+    font-weight:700;font-size:.97rem;min-height:46px;
+  }
+  .card.teacher .icon{background:#fdf0e6}
+  .card.teacher .cta{background:#2b3446}
+  .card.teacher:hover{border-color:#f0d6bf}
+  .info{
+    margin-top:22px;background:var(--surface);border:1px solid var(--line);
+    border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px 22px;
+  }
+  .info h2{margin:0 0 10px;font-size:1.05rem}
+  .info ul{margin:0;padding-left:20px;color:var(--muted)}
+  .info li{margin-bottom:6px}
+  footer{text-align:center;color:var(--muted);font-size:.85rem;margin-top:26px}
+  code.math-fallback{
+    background:#f1f3f8;border:1px solid var(--line);border-radius:6px;
+    padding:1px 6px;font-family:Consolas,monospace;font-size:.9em;
+  }
+  @media (max-width:520px){
+    .wrap{padding:16px 12px 44px}
+    .hero{padding:22px 16px}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="topbar-title">Ganzrationale Funktionen &middot; Lernbereich</span>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <section class="hero">
+    <span class="badge">Klassenarbeit-Vorbereitung</span>
+    <h1>Ganzrationale Funktionen</h1>
+    <p>
+      Diese Seite bündelt alles, was du für die Klassenarbeit brauchst:
+      eine <strong>Checkliste</strong> zur Selbsteinschätzung, einen <strong>interaktiven Selbsttest</strong>
+      und eine Auswertung für deine Lehrkraft.
+    </p>
+    <div class="formula-row">
+      <div class="formula" id="f1"></div>
+      <div class="formula" id="f2"></div>
+      <div class="formula" id="f3"></div>
+      <div class="formula" id="f4"></div>
+    </div>
+  </section>
+
+  <section class="cards">
+    <a class="card" href="checkliste.html">
+      <div class="icon">&#10003;</div>
+      <h2>Zur Checkliste</h2>
+      <p>16 &bdquo;Ich kann&ldquo;-Sätze: Wähle zu jedem Punkt, ob du ihn schon kannst oder noch üben musst.</p>
+      <div class="cta">Checkliste starten &nbsp;&rarr;</div>
+    </a>
+
+    <a class="card" href="selbsttest.html">
+      <div class="icon">&#9998;</div>
+      <h2>Zum Selbsttest</h2>
+      <p>16 Aufgaben zu allen Themen – Multiple Choice, Richtig/Falsch, Sortieren, Lückentext und mehr.</p>
+      <div class="cta">Selbsttest starten &nbsp;&rarr;</div>
+    </a>
+
+    <a class="card teacher" href="ergebnisse.html">
+      <div class="icon">&#128274;</div>
+      <h2>Zu den Ergebnissen (Lehrer)</h2>
+      <p>Passwortgeschützte Auswertung aller Checklisten und Selbsttests – filterbar nach Kurs, mit CSV-Export.</p>
+      <div class="cta">Zur Lehrerauswertung &nbsp;&rarr;</div>
+    </a>
+  </section>
+
+  <section class="info">
+    <h2>So funktioniert&rsquo;s</h2>
+    <ul>
+      <li><strong>Checkliste:</strong> Vorname und Kurs angeben, alle 16 Punkte bewerten, Ergebnis speichern.</li>
+      <li><strong>Selbsttest:</strong> Aufgaben bearbeiten, <em>Auswerten</em> klicken und sofort sehen, welche Antworten stimmen.</li>
+      <li><strong>Speichern:</strong> Ergebnisse bleiben auf diesem Gerät gespeichert und werden automatisch an die Schule übertragen.</li>
+      <li><strong>Formeln:</strong> Alle mathematischen Schreibweisen werden automatisch schön dargestellt.</li>
+    </ul>
+  </section>
+
+  <footer>&copy; Lernbereich Mathematik &middot; Ganzrationale Funktionen</footer>
+</main>
+
+<script>
+  /* ---------- KaTeX-Hilfsfunktion m(...) ---------- */
+  /* Wandelt LaTeX in schön dargestellte Mathematik um, z. B. m('\\frac{1}{2}') */
+  function m(tex, displayMode){
+    try{
+      if(window.katex){
+        return katex.renderToString(tex, {
+          throwOnError:false,
+          displayMode:!!displayMode,
+          strict:false,
+          output:'html'
+        });
+      }
+    }catch(e){ /* KaTeX nicht geladen -> Fallback unten */ }
+    return '<code class="math-fallback">' + String(tex).replace(/[<>]/g,'') + '</code>';
+  }
+
+  window.addEventListener('DOMContentLoaded', function(){
+    document.getElementById('f1').innerHTML = '<span class="formula-label">Bruchform</span>' + m('f(x)=\\dfrac{p(x)}{q(x)}');
+    document.getElementById('f2').innerHTML = '<span class="formula-label">Definitionslücken</span>' + m('q(x)=0');
+    document.getElementById('f3').innerHTML = '<span class="formula-label">Grad</span>' + m('n\\ \\Rightarrow\\ \\text{max. }\\,n\\ \\text{ Nullstellen}');
+    document.getElementById('f4').innerHTML = '<span class="formula-label">Ableitungen</span>' + m('f\'(x),\\ f\'\'(x),\\ f\'\'\'(x)');
+  });
+</script>
+</body>
+</html>
